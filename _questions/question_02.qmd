@@ -1,93 +1,71 @@
-<!-- question-type: prepare -->
 ### Exercise 2: Combining Datasets
 
-In this exercise, we'll combine two or more data frames using joins. Sometimes, joining adds columns. Other times, it adds rows — this is the case when either or all of the data frames include multiple observations for the same join key.
+In this exercise, you will combine information from two datasets using a join.
 
-Let's walk through both situations.
-
-To start, let's load the necessary data for this exercise - for two of these data sets, the code below also does some 'light' wrangling (similar to what we did to our data sets in last week's tutorial):
+To start, load the data:
 
 ```{r}
 #| eval: false
 
-firm_codes <- 
-    read_csv("data/asx_200_2024.csv") |> 
+firm_codes <-
+    read_csv("data/asx_200_2024.csv") |>
     select(gvkey, conm, gsubind)
 
 subindustry_names <-
     read_csv("data/GICS_subindustry.csv")
-
-pe_data <- 
-    read_csv("data/pe.csv") |> 
-    select(gvkey, fyear, pe) |>
-    filter(!is.na(pe)) |> 
-    arrange(gvkey, fyear)
 ```
 
-**(a)**. 
-We start with a data frame that lists each firm's subindustry code (`gsubind`), using the largest 200 firms on the ASX in 2024:
+Take a quick look at the two datasets:
 
 ```{r}
-firm_codes |> 
+firm_codes |>
     head(10)
 ```
 
-We also have a lookup table that tells us the name of each subindustry:
-
 ```{r}
-subindustry_names |> 
+subindustry_names |>
     head(10)
 ```
 
-Use a left join to add the subindustry name to each firm in the `firm_codes` dataset using the variable `gsubind` as the join key. The code below gets you started:
+**(a)** Look at the variables in `firm_codes` and `subindustry_names`. Which variable or variables look like they could be used to join these two datasets?
+
+**(b)** Which join variable would you choose? Explain why it is the best choice here.
+
+**(c)** Use a left join to add the subindustry name to each firm in `firm_codes`.
 
 ```{r}
 #| eval: false
-firm_info <- 
-    YOUR_DATASET_NAME |>
-    left_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
 
-firm_info |> 
+firm_info <-
+    YOUR_DATASET_NAME |>
+    left_join(YOUR_DATASET_NAME, by = join_by(YOUR_VARIABLE_NAME))
+
+firm_info |>
     head(10)
 ```
 
+**(d)** What changed after the join? Briefly explain:
 
-**(b).** What kind of join did we just perform? To help answer this question, consider the following:
+* what information was added
+* whether the join mainly added rows or columns
+* why this makes the dataset more useful for analysis
 
-* What kind of thing are we adding: columns or rows?
-* Did each `gsubind` only appear once in the dataset `subindustry_names`?
-* Does this kind of join have a name? If so, what is it?
+**(e)** Look at how `gsubind` behaves in the two datasets.
 
-**(c)**.
+* In which dataset would you expect each `gsubind` to appear only once?
+* In which dataset can the same `gsubind` appear many times?
+* Why does that make sense?
 
-Now let's bring in PE ratio data, which has multiple years per firm:
+**(f)** Fill in the variable name in each sentence below.
 
-```{r}
-pe_data |> 
-    head(10)
-```
+In `subindustry_names`, `_____` behaves like a **primary key** because each code identifies one subindustry label.
 
-Use a left join to add the P/E data to each firm in the `firm_info` dataset using the variable `gvkey` as the join key. Use the starter code below to implement this join:
+In `firm_codes`, `_____` behaves like a **foreign key** because many firms can share the same subindustry code.
 
-```{r}
-#| eval: false
-firm_pe_data <- 
-    YOUR_DATASET_NAME |>
-    YOUR_JOIN_TYPE(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
-
-firm_pe_data |>
-  head(10) |>
-  select(pe, everything())
-```
-
-**(d).** What kind of join did we just perform? To help answer this question, consider the following:
-
-* What kind of thing are we adding: columns or rows?
-* How many rows are in the dataset `firm_pe_data`? How about `firm_info`?
-* Does each `gvkey` in the original table (`firm_info`) now appear once or multiple times in the 'joined' data frame (`firm_pe_data`)? Why?
-* Does this kind of join have a name? If so, what is it?
+**(g)** Suppose we reversed the join and started with `subindustry_names` on the left-hand side. What would be different about the resulting dataset, and why?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
+
 ::: {.content-visible when-profile="r-teaching-guide"}
 
 ::: {.teaching-block}
@@ -98,43 +76,47 @@ Teaching Note
 
 ::: {.teaching-block-body}
 
-🎯 **Learning Objective** 
+🎯 **Learning Objective**
 Students should:
 
-- Understand how joins work when one table has unique keys and another has repeated keys.
-
-- Practise distinguishing between joins that add columns (many-to-one) and joins that expand rows (one-to-many).
-
-- Gain confidence in using `left_join()` to combine lookup tables and time-series data.
+* Identify a sensible join key by comparing the variables in two tables.
+* Use a `left_join()` to combine a firm-level dataset with a lookup table.
+* Explain how the role of a variable can differ across tables.
+* Build intuition for why the table on the left-hand side matters in a join.
 
 ✅   **Core Concepts to Highlight**
 
-Mutating joins: left joins add information while preserving rows from the first table.
-
-Key uniqueness: joins behave differently depending on whether the join key is unique in one or both tables.
-
-Join types in practice: many-to-one (lookup/labels) vs. one-to-many (expanding time dimension).
+* A join uses a shared variable, called a key, to match rows across tables.
+* Not every shared-looking variable is a good key. Students should think about reliability and level of match.
+* A `left_join()` keeps all rows from the table on the left and adds matching information from the table on the right.
+* In a lookup table, a variable may uniquely identify rows. In another table, the same variable may be used repeatedly to link observations back to those rows.
+* This is a natural place to introduce the language of **primary key** and **foreign key**.
 
 💬 **Suggested In-Class Prompts** (if needed)
 
-NA
+* Which variables appear in both tables, and which one would you trust more for matching?
+* Why is `gsubind` a better choice than something like a name column?
+* After the join, what stayed the same and what changed?
+* Why does the left-hand table matter in a `left_join()`?
+* What role is `gsubind` playing in each table?
 
 📌 **Common Misunderstandings**
 
-Assuming all joins just “add columns” without realizing they can multiply rows.
-
-Forgetting to check for duplicate keys, leading to unintended row explosion.
-
-Confusing the terminology: e.g., calling a many-to-one join “one-to-one” just because one table looks clean.
-
-:::
+* Assuming that any variable that appears in both tables is equally good for joining.
+* Thinking that a join always changes the number of rows.
+* Describing the result of a `left_join()` without noting that the left-hand table determines which rows are preserved.
+* Treating primary key and foreign key as abstract jargon rather than as descriptions of a variable’s role in a table.
 
 :::
 
 :::
+
+:::
+
 <!-- END PROFILE:r-teaching-guide -->
 
 <!-- BEGIN PROFILE:r-solutions -->
+
 ::: {.content-visible when-profile="r-solutions" when-profile="r-teaching-guide"}
 
 ::: {.solution-block}
@@ -145,109 +127,48 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a). **
+**(a)** The most plausible join variable is `gsubind`. Depending on the columns shown in `subindustry_names`, students may also mention other code-like variables, but `gsubind` is the key variable we want here because it appears in both tables and represents the subindustry code.
+
+**(b)** `gsubind` is the best choice because it is a structured code variable designed to represent the same subindustry in both tables. In general, numeric or code-based match keys are usually safer than text variables because they are more standardised and less likely to vary across datasets. A text variable like `conm` would be a worse choice because company names can be abbreviated, misspelled, formatted differently, or written inconsistently across files. So the key point is not just that `gsubind` fits the business meaning here, but that coded identifiers are often much more reliable join keys than text labels.
+
+**(c)**
 
 ```{r}
-firm_info <- 
+firm_info <-
     firm_codes |>
-    left_join(subindustry_names, by = "gsubind")
+    left_join(subindustry_names, by = join_by(gsubind))
 
 firm_info |>
-  head(10)
+    head(10)
 ```
 
-**(b).** This is a mutating join.
+**(d)** The join adds subindustry names to the firm-level dataset. It mainly adds columns rather than rows, because we are attaching descriptive information to each existing firm. This makes the dataset more useful because we can now analyse firms using meaningful industry labels rather than just codes.
 
-What kind of thing are we adding?
+**(e)** In `subindustry_names`, we would expect each `gsubind` to appear only once because each code should map to one subindustry label. In `firm_codes`, the same `gsubind` can appear many times because many firms can belong to the same subindustry. That makes sense because `subindustry_names` is a lookup table, while `firm_codes` is a firm-level table.
 
-* Columns — we're adding a column that contains the subindustry name.
+**(f)** In both sentences, the missing variable name is `gsubind`.
 
-Did each gsubind only appear once in subindustry_names?
+In `subindustry_names`, `gsubind` behaves like a **primary key** because each code identifies one subindustry label.
 
-* Yes — this is what makes it safe to use as a lookup table.
+In `firm_codes`, `gsubind` behaves like a **foreign key** because many firms can share the same subindustry code.
+
+**(g)** If we started with `subindustry_names` on the left-hand side, the resulting dataset would keep all subindustry rows rather than all firm rows. That means the structure of the output would be organised around subindustries, not firms. In a `left_join()`, the table on the left determines which rows are preserved.
 
 ```{r}
-subindustry_names |>
-  count(gsubind) |>
-  arrange(desc(n))
+subindustry_first <-
+    subindustry_names |>
+    left_join(firm_codes, by = join_by(gsubind))
+
+subindustry_first |>
+    head(10)
 ```
 
-Does this kind of (mutating) join have a name?
-
-* Yes — it’s often called a many-to-one join, because many firms share the same subindustry code, but each code maps to one subindustry name.
-
-```{r}
-firm_codes |>
-  count(gsubind) |>
-  arrange(desc(n))
-```
-
-**(c).**
-
-```{r}
-firm_pe_data <- 
-    firm_info |>
-    left_join(pe_data, by = "gvkey")
-
-firm_pe_data |>
-  head(10) |>
-  select(pe, everything())
-```
-
-**(d). ** Again, this is a mutating join.
-
-What kind of thing are we adding?
-
-* Rows (mainly) — each firm now appears once for each year of (pe) data available.
-* Note also the PE column is added
-
-How many rows are in `firm_pe_data`? How about `firm_info`?
-
-```{r}
-firm_pe_data |> 
-    nrow()
-```
-
-```{r}
-firm_info |> 
-    nrow()
-```
-
-```{r}
-pe_data |>
-  nrow()
-```
-
-
-Does each gvkey in `firm_info` now appear once or multiple times? Why?
-
-* Multiple times — once per year of PE data available for that firm.
-
-```{r}
-firm_info |>
-  count(gvkey) |>
-  arrange(gvkey)
-```
-
-```{r}
-firm_pe_data |>
-  count(gvkey) |>
-  arrange(gvkey)
-```
-
-For example, let's examine `gvkey == "013312"` in `pe_data`:
-
-```{r}
-pe_data |>
-  filter(gvkey == "013312") 
-```
-
-Does this kind of join have a name?
-Yes — it's a one-to-many join, because one firm matches to many years in the `pe_data` table.
+This version starts from the subindustry lookup table and then brings in the firms that match each subindustry code. The result is therefore anchored on subindustries rather than firms, which is different from the earlier join where every firm row was preserved first.
 
 :::
 
 :::
 
 :::
+
 <!-- END PROFILE:r-solutions -->

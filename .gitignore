@@ -7,3 +7,7 @@
 
 /.quarto/
 *_student.qmd
+**/*.quarto_ipynb
+tutorial_cache/*
+tutorial_files/*
+data/*

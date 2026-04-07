@@ -3,7 +3,7 @@
 
 By the end of this tutorial, you should be able to:
 
-- Recognize the difference between tidy and messy data, and use `pivot_longer()` to tidy up wide data.
+- Explain the difference between tidy and messy data, and use `pivot_longer()` to tidy up wide data.
 - Summarize and visualise financial data, and explain why tidy formats make analysis easier.
 - Plot and interpret relationships between share price and earnings per share (EPS).
 - Combine data from multiple tables using joins (`left_join()`, `inner_join()`, `anti_join()`), and understand what each join includes or excludes.

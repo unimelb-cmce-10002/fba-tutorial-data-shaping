@@ -1,85 +1,86 @@
 <!-- question-type: prepare -->
-### Exercise 1: Identifying Issues with Un-tidy Data
+### Exercise 1: Identifying Issues with Untidy Data
 
-We'll start with a deliberately messy version of the ASX stock price data. Run the following code to load and implement some preliminary manipulations this data set.
+We will start with a deliberately messy version of the ASX stock price data. Run the following code to load the dataset.
 
 ```{r}
 #| eval: false
 asx_prices_messy <- read_csv("data/asx_prices_messy.csv")
 ```
 
+Then inspect a subset of the data:
+
 ```{r}
-asx_prices_messy |> 
-    select(gvkey, conm, price_2023, price_2024, 
+asx_prices_messy |>
+    select(gvkey, conm, price_2023, price_2024,
            eps_2023, eps_2024) |>
     head(10)
 ```
 
-**(a).** In what ways is this data frame not tidy? Be specific: which tidy‑data principles are violated?
+**(a)** In what ways is this data frame not tidy? What principles of tidy data are violated?
 
-**(b).** Suppose we want the average share price across all firms for the period 2023–2024. With this messy layout you will need to compute sum and counts across columns (i.e., sum prices for 2023, for 2024; then, count non-missing observations in these columns for 2023, 2024, etc). Use the starter code below to compute the average share price across all firms for the period 2023-2024.
+**(b)** Use the starter code below to compute the average share price across all firms for 2023 and 2024.
 
 ```{r}
 #| eval: false
 
 asx_prices_messy |>
     summarise(
-        # Sum the prices from the 2023 year
-        sum_prices_2023   = sum(YOUR_CODE_HERE, na.rm = TRUE),
-        # Sum the prices from the 2024 year
-        sum_prices_2024   = sum(YOUR_CODE_HERE, na.rm = TRUE),
-        # Count the number of firms with non missing
-        # prices in 2023
+        # Add up all 2023 share prices
+        sum_prices_2023 = sum(YOUR_CODE_HERE, na.rm = TRUE),
+        # Add up all 2024 share prices
+        sum_prices_2024 = sum(YOUR_CODE_HERE, na.rm = TRUE),
+        # Count how many firms have a non-missing share price in 2023
         count_firms_2023 = sum(!is.na(price_2023)),
-        # Count the number of firms with non missing
-        # prices in 2024
+        # Count how many firms have a non-missing share price in 2024
         count_firms_2024 = sum(!is.na(price_2024))
     ) |>
     mutate(
-        # Compute the total sum of prices across both years
-        total_sum   = YOUR_CODE_HERE + YOUR_CODE_HERE,
-        # Compute the total count of firms across both years
+        # Combine the 2023 and 2024 price totals
+        total_sum = YOUR_CODE_HERE + YOUR_CODE_HERE,
+        # Combine the number of non-missing firm prices across both years
         total_count = count_firms_2023 + count_firms_2024
     ) |>
     mutate(
-        # Manually compute the average
+        # Divide the total sum of prices by the total number of firms
         avg_price_23_24 = YOUR_CODE_HERE / YOUR_CODE_HERE
     ) |> 
     select(avg_price_23_24)
 ```
 
-**(c)** Explain why the approach we took in (b) doesn't scale well as more years of data are added.
+**(c)** Why does the approach in part (b) not scale well as more years are added?
 
-**(d)** Examining relationships between variables in a messy data frame can be especially tricky. Suppose we want to see whether share price and earnings per share are correlated in 2024. With this messy structure we must hard-code the year's columns:
+**(d)** The code below plots share price against earnings per share in 2024.
 
 ```{r}
 #| warning: false
+#| eval: false
 
 asx_prices_messy |>
     filter(eps_2024 > -5) |>
     ggplot(aes(x = eps_2024, y = price_2024)) +
-    geom_point(alpha = 0.4) +
-    geom_smooth(method = "lm", se = TRUE, color = "blue") +
+    YOUR_CODE_HERE +
+    YOUR_CODE_HERE +
     labs(
-        title = "Share Price vs EPS (2024)",
-        x = "Earnings per Share (EPS, 2024)",
-        y = "Share Price (2024)"
+        title = "YOUR_LABEL_HERE",
+        x = "YOUR_LABEL_HERE",
+        y = "YOUR_LABEL_HERE"
     ) +
     theme_minimal()
 ```
 
-Based on this plot, what relationship do you see in 2024?
-Why does this make sense economically (what are investors "buying" when they invest)?
+What relationship do you see? Why does this make sense economically?
 
-**(e)**. Now imagine you also wanted to include 2023 in the same analysis. You do not need to implement code to add these data points to the plot above — just explain the steps you'd need to take.
+**(e)** Suppose you also wanted to include 2023 in this analysis. Briefly explain:
 
-* Which additional columns would you need to reference in the data?
-* How would your plotting code change?
-* What problems do you foresee if you wanted to extend this further to 2019–2024?
+* which extra columns you would need
+* what you would need to change in the plotting process
+* why this approach would become awkward if extended to 2019 to 2024
 
-
+**(f)** In two or three sentences, explain to a manager why this data structure makes analysis harder than it needs to be.
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
+
 ::: {.content-visible when-profile="r-teaching-guide"}
 
 ::: {.teaching-block}
@@ -90,44 +91,47 @@ Teaching Note
 
 ::: {.teaching-block-body}
 
-🎯 **Learning Objective** 
+🎯 **Learning Objective**
 Students should:
 
-- Identify and explain why the provided data is not tidy.
-
-- Practise reshaping messy data structures to make analysis scalable.
-
-- Gain hands-on experience computing summaries and relationships when variables are spread across columns.
+* Identify and explain why the provided data is not tidy.
+* Practise working with a wide data structure and see why it becomes awkward for repeated analysis tasks.
+* Build intuition for why analysts often reshape data before doing summaries or visualisations.
+* Communicate, in plain language, why data structure matters for business analysis.
 
 ✅   **Core Concepts to Highlight**
 
-Tidy data rules: one variable per column, one observation per row.
-
-Scalability: how wide data (year-specific columns) leads to repetitive, brittle code.
-
-Wrangling tools: the role of `pivot_longer()` and joins in cleaning and combining datasets.
-
+* Tidy data rules: one variable per column, one observation per row.
+* Wide data often store the same variable across many year-specific columns.
+* A structure that works for viewing data can still be awkward for analysis.
+* Scalability: code that works for one or two years may become repetitive and brittle as more years are added.
+* Analysts often tidy data to make summaries, plots, and comparisons easier to repeat.
 
 💬 **Suggested In-Class Prompts** (if needed)
 
-NA
+* What exactly is stored in the column names here?
+* Why is part (b) more cumbersome than it should be?
+* What would happen if we added another five years of data in this format?
+* Why might a manager care about the way the data are structured if the numbers themselves have not changed?
 
 📌 **Common Misunderstandings**
 
-Thinking that “messy” just means ugly formatting, rather than a structural problem.
-
-Assuming that writing more `summarise()` lines is fine, without realizing it becomes unmanageable.
-
-Confusing the role of `select()`/`summarise()` (short-term fixes) with the need for reshaping (`pivot_longer()`) as a long-term solution.
-
-:::
+* Thinking that “messy” just means visually untidy rather than structurally awkward.
+* Saying the data are not tidy without explaining which tidy-data principles are violated.
+* Treating the code in part (b) as a reasonable long-run solution rather than a short-term workaround.
+* Explaining part (e) vaguely, without linking the difficulty to repeated year-specific columns.
+* Giving a managerial explanation that focuses on R syntax rather than on speed, flexibility, and ease of analysis.
 
 :::
 
 :::
+
+:::
+
 <!-- END PROFILE:r-teaching-guide -->
 
 <!-- BEGIN PROFILE:r-solutions -->
+
 ::: {.content-visible when-profile="r-solutions" when-profile="r-teaching-guide"}
 
 ::: {.solution-block}
@@ -138,68 +142,65 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a). Why this data frame is “messy”**
+**(a)** This data frame is not tidy because the year is stored in the column names rather than in its own variable. Columns such as `price_2023` and `price_2024` contain values of the variable `year`, which should instead appear in a separate column. The data also mix two variables, the measure (`price` or `eps`) and the year, inside a single column name. More broadly, one firm-year observation is spread across multiple columns rather than appearing as one row.
 
-- Data is stored in column names: columns like `price_2020` or `eps_2023` contain values (years) that should instead appear in a variable column (e.g., `fyear`). This violates the principles that “column names are variables, not values” and "each value must have its own cell."
-
-- Two variables are encoded in column names: each column like `price_2020` or `eps_2023` mixes the measure (price vs EPS) and the year (2020, 2023). This violates “each variable has its own column.”
-
-- One observation is split across many columns: a single firm–year record is spread over separate columns for each year, rather than one row per firm–year. This violates “each observation (firm–year) has its own row.”
-
-- Heterogeneous columns for the same concept: all the `price_*` columns represent the same variable (price) measured in different years, but they appear as many columns instead of one `price` column with a `fyear` identifier.
-
-**(b)**.
+**(b)**
 
 ```{r}
 asx_prices_messy |>
     summarise(
-        # Sum the prices from the 2023 year
-        sum_prices_2023   = sum(price_2023, na.rm = TRUE),
-        # Sum the prices from the 2024 year
-        sum_prices_2024   = sum(price_2024, na.rm = TRUE),
-        # Count the number of firms with non missing
-        # prices in 2023
+        # Add up all 2023 share prices
+        sum_prices_2023 = sum(price_2023, na.rm = TRUE),
+        # Add up all 2024 share prices
+        sum_prices_2024 = sum(price_2024, na.rm = TRUE),
+        # Count how many firms have a non-missing share price in 2023
         count_firms_2023 = sum(!is.na(price_2023)),
-        # Count the number of firms with non missing
-        # prices in 2024
+        # Count how many firms have a non-missing share price in 2024
         count_firms_2024 = sum(!is.na(price_2024))
     ) |>
     mutate(
-        # Compute the total sum of prices across both years
-        total_sum   = sum_prices_2023 + sum_prices_2024,
-        # Compute the total count of firms across both years
+        # Combine the 2023 and 2024 price totals
+        total_sum = sum_prices_2023 + sum_prices_2024,
+        # Combine the number of non-missing firm prices across both years
         total_count = count_firms_2023 + count_firms_2024
     ) |>
     mutate(
-        # Manually compute the average
+        # Divide the total sum of prices by the total number of firms
         avg_price_23_24 = total_sum / total_count
     ) |> 
     select(avg_price_23_24)
 ```
 
-**(c)**.
-The approach in (b) doesn't scale because each new year of data adds a new column (e.g., `price_2022`, `price_2023`), which requires manually updating the code in four different places: two sums and two counts. This becomes tedious and error-prone as the number of years grows.
+**(c)** This approach does not scale well because every new year adds more columns that must be handled manually. We would need to keep adding extra sums, counts, and references to year-specific variables, making the code longer and easier to break.
 
+**(d)**
 
-**(d)**. 
-In 2024, the plot shows a positive relationship between earnings per share (EPS) and share price. This makes sense because investors are generally willing to pay more for companies that earn more per share — higher current earnings often signal better future earnings, which increases a firm’s value.
+```{r}
+asx_prices_messy |>
+    filter(eps_2024 > -5) |>
+    ggplot(aes(x = eps_2024, y = price_2024)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", se = TRUE) +
+    labs(
+        title = "Share Price vs EPS (2024)",
+        x = "Earnings per Share (EPS, 2024)",
+        y = "Share Price (2024)"
+    ) +
+    theme_minimal()
+```
 
-Economically, this reflects the idea that when investors buy a share, they’re buying a claim on future earnings. So firms with higher EPS tend to attract more investor demand, pushing up their share price.
+The plot suggests a positive relationship between earnings per share and share price in 2024. This makes sense economically because investors are buying a claim on the firm’s future earnings, so firms with stronger earnings tend to attract more demand and higher share prices.
 
-**(e)**. 
+**(e)** A good answer would explain that we would need to bring in the 2023 columns, such as `eps_2023` and `price_2023`, in addition to the 2024 ones. The plotting process would become more complicated because we would need to manually combine or stack information from multiple years before plotting. This would become increasingly awkward from 2019 to 2024 because each extra year would add more column references and more manual work, making the analysis repetitive and harder to maintain.
 
-To include 2023 in the same analysis, you'd need to manually reference two more columns: `eps_2023` and `price_2023.` You would then need to copy and adapt your plotting code to create a second scatterplot or combine the data in some custom way.
+**(f)** A manager-friendly explanation might be:
 
-Your code would get much longer and harder to manage, especially if you wanted to compare more years (e.g., 2019–2024). For each new year, you'd have to:
+> The current structure makes even simple comparisons across years more cumbersome than they need to be. Reorganising the data would make it easier to summarise trends, build plots, and update the analysis when new years of data are added.
 
-* Add new x and y column references (e.g., `eps_2022`, `price_2022`)
-* Manually stack or merge the data across years
-* Repeat or complicate the plotting code
-
-This shows how the column-based structure becomes inefficient and messy, making it hard to scale analyses or visualizations.
 :::
 
 :::
 
 :::
+
 <!-- END PROFILE:r-solutions -->

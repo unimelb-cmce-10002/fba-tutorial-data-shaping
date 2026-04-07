@@ -1,0 +1,270 @@
+### Exercise 6: Auditing Missing P/E Ratios Before an Analytics Meeting
+
+Suppose your team is preparing for an analytics meeting. You have built a firm-year dataset with share prices, earnings, and P/E ratios, but many firm-year observations still have missing `pe` values.
+
+Before moving ahead, you want to understand:
+
+* what the full dataset looks like
+* what the complete-match dataset looks like
+* which observations are missing P/E
+* what you should ask the data team before continuing
+
+**(a)** In Exercise 4, we used a `left_join()` to add P/E ratios from `pe_data` to `asx_tidy`.
+
+What happened to the rows in `asx_tidy` that did **not** have a matching P/E ratio in `pe_data`? Briefly explain what the join did in those cases.
+
+**(b)** Run the code below, which uses a different kind of join, called `inner_join()`.
+
+```{r}
+#| eval: false
+asx_with_pe_inner <-
+    asx_prices_tidy |>
+    inner_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+```
+
+How is `asx_with_pe_inner` different from `asx_with_pe`? What does `inner_join()` keep that `left_join()` does not?
+
+**(c)** Run the code below, which uses another kind of join, called `anti_join()`.
+
+```{r}
+#| eval: false
+missing_pe <-
+    asx_prices_tidy |>
+    anti_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+```
+
+What does `missing_pe` represent? How is this different from the dataset created with `inner_join()` in part (b)?
+
+**(d)** Compare the number of rows in the following datasets.
+
+```{r}
+#| eval: false
+nrow(asx_prices_tidy)
+nrow(asx_with_pe)
+nrow(asx_with_pe_inner)
+nrow(missing_pe)
+```
+
+What do you notice? What does this tell you about how much of the firm-year dataset has valid P/E coverage?
+
+
+**(e)** Look at the observations in `missing_pe`.
+
+Use code to investigate whether missing P/E ratios seem to be concentrated in certain years or associated with certain EPS values.
+Write one or two short findings based on what you see.
+
+**(f)** The `pe_data` file was provided to us as a separate dataset.
+
+Why might some firm-year observations in `asx_tidy` still fail to find a matching P/E ratio in that file, even when `price` and `eps` are present?
+
+In your answer, think about possible differences in:
+
+* which firms were included
+* which years were covered
+* how P/E ratios were defined or filtered before the file was given to us
+
+**(g)** Suppose you are preparing for a meeting with the data team before using `pe` in your analysis.
+
+What are two or three specific questions you would ask to check whether the missing P/E values reflect:
+
+* a normal feature of the data
+* a difference in firm or year coverage
+* a problem in how the file was sourced or matched
+
+If the missing values seem to come from incomplete firm coverage, what might your team do next to source the missing data?
+
+<!-- BEGIN PROFILE:r-teaching-guide -->
+
+::: {.content-visible when-profile="r-teaching-guide"}
+
+::: {.teaching-block}
+
+::: {.teaching-block-header}
+Teaching Note
+:::
+
+::: {.teaching-block-body}
+
+🎯 **Learning Objective**
+Students should:
+
+* Explain what happens to unmatched rows under a `left_join()`.
+
+* Interpret the outputs of `inner_join()` and `anti_join()` when auditing data coverage.
+
+* Compare full-sample, matched-sample, and unmatched observations in a firm-year dataset.
+
+* Use join outputs to think critically about missing data before proceeding with analysis.
+
+✅ **Core Concepts to Highlight**
+
+A `left_join()` keeps all rows from the left-hand dataset and adds matching values where available. Unmatched rows stay in the dataset with missing values.
+
+An `inner_join()` keeps only rows that have a match in both datasets.
+
+An `anti_join()` keeps only rows from the left-hand dataset that do not have a match in the right-hand dataset.
+
+These joins are not only tools for combining data. They are also tools for checking data readiness and diagnosing missing coverage.
+
+💬 **Suggested In-Class Prompts**
+
+*“What is the difference between a missing value after a left join and a row disappearing in an inner join?”*
+
+*“If you only analysed the inner-join sample, what observations would you be throwing away?”*
+
+*“What kinds of business or data-construction reasons could explain missing P/E ratios?”*
+
+*“What would you want to clarify with the data team before using P/E in a report?”*
+
+📌 **Common Misunderstandings**
+
+Students may think `inner_join()` is simply a ‘better’ join because it produces complete data, without noticing that it drops observations.
+
+Students may confuse missing `pe` values with a coding error, when in practice they may reflect real data limitations or variable-definition issues.
+
+Students may not initially see that `missing_pe` comes from the left-hand dataset, not from `pe_data`.
+
+Students may overlook that dropping unmatched observations could bias later analysis if the missingness is systematic.
+
+:::
+
+:::
+
+:::
+
+<!-- END PROFILE:r-teaching-guide -->
+
+<!-- BEGIN PROFILE:r-solutions -->
+
+::: {.content-visible when-profile="r-solutions" when-profile="r-teaching-guide"}
+
+::: {.solution-block}
+
+::: {.solution-block-header}
+Solution
+:::
+
+::: {.solution-block-body}
+
+**(a).**
+
+Rows in `asx_tidy` that did not have a matching P/E ratio in `pe_data` were still kept in the dataset.
+
+The `left_join()` added `pe` where a match was found, and left `pe` as missing (`NA`) where no match was found.
+
+**(b).**
+
+```{r}
+asx_with_pe_inner <-
+    asx_prices_tidy |>
+    inner_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+```
+
+`asx_with_pe_inner` contains only the firm-year observations that have a match in both `asx_tidy` and `pe_data`.
+
+Compared with `asx_with_pe`, it drops the rows where no matching P/E ratio was found.
+
+So `inner_join()` keeps only complete matches, while `left_join()` keeps all rows from `asx_tidy` whether they match or not.
+
+**(c).**
+
+```{r}
+missing_pe <-
+    asx_prices_tidy |>
+    anti_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+```
+
+`missing_pe` contains the firm-year observations in `asx_tidy` that did not find a match in `pe_data`.
+
+This is different from the `inner_join()` result because `inner_join()` keeps the matched observations, while `anti_join()` keeps the unmatched ones.
+
+**(d).**
+
+`asx_tidy` and `asx_with_pe` should have the same number of rows, because the `left_join()` keeps every row from `asx_tidy`.
+
+`asx_with_pe_inner` should have fewer rows if some firm-year observations do not have a matching P/E ratio.
+
+`missing_pe` shows exactly the observations that were left out of the inner join.
+
+Together, these row counts show how much of the firm-year dataset has valid P/E coverage and how much is missing.
+
+**(e).**
+
+Students’ exact answers will vary, but a good answer would identify one or two patterns in `missing_pe`.
+
+For example:
+
+* missing P/E ratios may be concentrated in certain years
+* missing P/E ratios may occur more often when EPS is negative or very close to zero
+* missing P/E rations for certain firms
+
+Illustrative code could include:
+
+```{r}
+missing_pe |>
+    count(fyear)
+```
+
+```{r}
+missing_pe |>
+    summarise(
+        min_eps = min(eps, na.rm = TRUE),
+        max_eps = max(eps, na.rm = TRUE),
+        avg_eps = mean(eps, na.rm = TRUE)
+    )
+```
+
+```{r}
+missing_pe |>
+  count(conm) |>
+  arrange(desc(n))
+```
+
+
+**(f).**
+
+Possible explanations include:
+
+* The supplied `pe_data` file may not cover every firm in our ASX dataset.
+* Some firms may appear in `asx_tidy` but be missing from `pe_data` for certain years.
+* The P/E file may cover a different time period from the main ASX dataset.
+* P/E ratios may be intentionally omitted when EPS is negative or very close to zero.
+* The data team may have filtered the file before giving it to us, so only a subset of firm-years was included.
+* The two datasets may have been sourced under different rules, even if they use the same identifiers.
+
+**(g).**
+
+Possible questions for the data team include:
+
+* Does `pe_data` cover all firms in our ASX dataset, or only a subset?
+* Are some years intentionally missing from the P/E file?
+* How is P/E defined in this dataset, and are firms with negative or near-zero EPS excluded?
+* Was the P/E file filtered before it was given to us?
+* Should missing P/E values be treated as expected missingness, or as a sign that the match or source file needs to be checked?
+
+If the missing values seem to reflect incomplete firm coverage, the team might:
+
+* check whether the missing firms can be sourced from the original provider
+* request a broader extract from the data team
+* look for an additional source covering those firms and years
+* decide whether the analysis should be restricted to firms with reliable P/E coverage
+
+:::
+
+:::
+
+:::
+
+<!-- END PROFILE:r-solutions -->

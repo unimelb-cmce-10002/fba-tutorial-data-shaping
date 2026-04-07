@@ -1,74 +1,66 @@
 <!-- question-type: inclass -->
-### Exercise 4: What's Missing? Understanding Joins by Seeing What They Drop
+### Exercise 4: Adding P/E Ratios with a Join
 
-In Exercise 2, we used `left_join()` to combine data from different tables — like firm details, subindustry names, and P/E ratios. That helped us build one data frame with all the information in one place. Now, we'll go a step further and explore what different kinds of joins keep and drop. This can help us spot missing or underrepresented data — and understand our dataset more deeply.
+**(a)** We want to add P/E ratios to our tidy ASX firm-year dataset.
 
-**(a)**.
-Let's start by counting how many firms in the ASX200 belong to each subindustry. Use the starter code below to return the three most common industries: 
-
-```{r}
-#| eval: false
-
-firm_info |> 
-    YOUR_CODE(subind) |> 
-    YOUR_CODE(desc(n)) |> 
-    YOUR_CODE(3)
-```
-
-And, now the three least common:
+Run the code below to load and prepare the P/E ratio data.
 
 ```{r}
 #| eval: false
-
-firm_info |> 
-    YOUR_CODE(subind) |> 
-    YOUR_CODE((n)) |> 
-    YOUR_CODE(3)
+pe_data <-
+    read_csv("data/pe.csv") |>
+    select(gvkey, fyear, pe) |>
+    filter(!is.na(pe)) |>
+    arrange(gvkey, fyear)
 ```
 
-**(b)**. Are there any subindustries that don’t appear in the ASX200 sample-and so are even less common those that we identify in (a)?
+What variables in `pe_data` seem to identify each row?
 
-We can use `anti_join()` to find subindustries listed in `subindustry_names` but missing from our firms data. How many subindustries are not included in the ASX200?
+**(b)** In `asx_tidy`, what does one row represent?
+
+Which variable or variables together identify a unique observation in this dataset?
+
+**(c)** Which **two** variables should we use to join `asx_tidy` and `pe_data`?
+
+**(d)** Why do we need both of these variables in the join?
+
+**(e)** Complete the code below to add the `pe` variable from `pe_data` to `asx_tidy`.
 
 ```{r}
 #| eval: false
-
-YOUR_CODE |> 
-    YOUR_CODE(firm_info, by = "subind") |> 
-    nrow()
+asx_with_pe <-
+    asx_tidy |>
+    left_join(
+        pe_data,
+        by = YOUR_CODE_HERE
+    )
 ```
 
-**(c)**. What kinds of industries are missing? Why might they be underrepresented in the ASX200?
+**(f)** After the join, what changed in the dataset?
 
-**(d)**. An `inner_join()` keeps only the firms that have a matching subindustry in the lookup table. Recreate the join you did in Exercise 2(a), but this time use `inner_join()` instead of `left_join()`.
+In your answer, explain:
+
+* what new information was added
+* whether the join mainly added rows or columns
+
+**(g)** Now suppose we join the two datasets using only `gvkey`.
+
+Run the code below.
 
 ```{r}
 #| eval: false
-
-firm_info_inner <- 
-    firm_codes |>
-    YOUR_CODE(subindustry_names, by = "gsubind")
+asx_wrong_join <-
+    asx_tidy |>
+    left_join(
+        pe_data,
+        by = YOUR_CODE_HERE
+    )
 ```
 
-**(e)** Are there any differences in the dataframe in (d) to the one you constructed in 2 (a)? Explain your answer.
-
-**(f)**. Over this exercise and Exercise 2, you've used three different types of joins:
-
-* `left_join()`
-* `anti_join()`
-* `inner_join()`
-
-Each one gives you a slightly different view of how your data frames relate to each other.
-
-In your own words, answer the following:
-
-1. What does each join keep and what does it drop?
-2. Which join is most useful when you want to preserve all rows from one table, even if they don’t match?
-3. Which join is best for finding mismatches between two tables?
-4. Which join only keeps perfect matches between the two tables?
-
+What goes wrong here, and why?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
+
 ::: {.content-visible when-profile="r-teaching-guide"}
 
 ::: {.teaching-block}
@@ -79,48 +71,57 @@ Teaching Note
 
 ::: {.teaching-block-body}
 
-🎯 **Learning Objective** 
+🎯 **Learning Objective**
 Students should:
 
-- Practise using `left_join()`, `inner_join()`, and `anti_join()` to explore overlap and gaps in datasets.
+* Recognise that after tidying, the observational unit in `asx_tidy` is a firm-year rather than just a firm.
 
-- Recognize how different joins highlight missing or unmatched data.
+* Identify when a join requires multiple keys rather than a single key.
 
-- Build intuition about when to use each join type in applied data wrangling.
+* Use `left_join()` with `join_by()` to combine two firm-year datasets.
 
-✅   **Core Concepts to Highlight**
+* Explain what can go wrong when a join is done with an incomplete key.
 
-Join logic: left keeps everything from the first table, inner keeps matches only, anti finds mismatches.
+✅ **Core Concepts to Highlight**
 
-Data completeness: joins are tools to detect what’s missing, not just to combine data.
+Observational unit: after Exercise 3, each row in `asx_tidy` represents one firm in one year.
 
-Practical checking: row counts before/after joins reveal structure and gaps.
+A correct join key must match the observational unit. Here, `gvkey` identifies the firm, while `fyear` identifies the year, so both are needed together.
 
+A `left_join()` keeps the rows from the left-hand dataset and adds matching columns from the right-hand dataset.
 
-💬 **Suggested In-Class Prompts** 
+Using too few join keys can create incorrect duplication because one observation can match many rows in the other table.
 
-*“Which subindustries disappear when we switch from left to inner join?”*
+💬 **Suggested In-Class Prompts**
 
-*“Why might some industries not appear in the ASX200 at all?”*
+* “What does one row mean now that the data are tidy?”*
 
-*“If you had to diagnose a data import problem, which join would you try first?”*
+* “Why is `gvkey` not enough on its own once firms appear in multiple years?”*
+
+* “What should stay the same after the correct join: rows, columns, or both?”*
+
+* “What kind of error are we making when we join only on firm and ignore year?”*
 
 📌 **Common Misunderstandings**
 
-Assuming all joins are interchangeable because the outputs “look similar” (e.g., column count doesn't change)
+Students may say that `gvkey` alone identifies a row because it identifies the firm, forgetting that the same firm appears in multiple years.
 
-Forgetting that `anti_join()` returns rows only from the first table (direction matters).
+Students may know both variables are needed but still struggle to explain why in terms of the observational unit.
 
-Overlooking that dropping rows in `inner_join()` can bias analysis if students don’t notice the loss.
+Some students may think a join is successful whenever it runs, even if it duplicates rows incorrectly.
+
+Students may not initially connect an incorrect join to downstream analytical errors.
+
+:::
 
 :::
 
 :::
 
-:::
 <!-- END PROFILE:r-teaching-guide -->
 
 <!-- BEGIN PROFILE:r-solutions -->
+
 ::: {.content-visible when-profile="r-solutions" when-profile="r-teaching-guide"}
 
 ::: {.solution-block}
@@ -133,109 +134,61 @@ Solution
 
 **(a).**
 
-```{r}
-firm_info |> 
-    count(subind) |> 
-    arrange(desc(n)) |> 
-    head(3)
-```
+The variables that seem to identify each row are `gvkey` and `fyear`.
 
-```{r}
-firm_info |> 
-    count(subind) |> 
-    arrange(n) |> 
-    head(3)
-```
+That is because each row appears to represent one firm in one year, with `pe` giving the P/E ratio for that firm-year observation.
 
-**(b).** 
+**(b).**
 
-```{r}
-subindustry_names |> 
-    anti_join(firm_info, by = "subind") |> 
-    nrow()
-```
+One row in `asx_tidy` represents one firm in one year.
 
-This tells us how many subindustries are not represented in the ASX200 sample — i.e., they appear in the lookup table but not among the top 200 firms.
+So the variables that together identify a unique observation are `gvkey` and `fyear`.
 
 **(c).**
 
-Look through this output and see if there's any common themes...
+The two variables we should use are `gvkey` and `fyear`.
+
+**(d).**
+
+We need both variables because `gvkey` tells us which firm we are looking at, but it does not tell us which year. Since each firm appears in multiple years, joining only on `gvkey` would not uniquely identify the correct match. Adding `fyear` makes the match happen at the firm-year level, which is the correct observational unit in both datasets.
+
+**(e).**
 
 ```{r}
-subindustry_names |> 
-    anti_join(firm_info, by = "subind") 
-```
-
-**(d)**.
-
-```{r}
-firm_info_inner <- 
-    firm_codes |>
-    inner_join(subindustry_names, by = "gsubind")
-
-firm_info_inner
-```
-
-**(e)**. 
-The difference is subtle, but if all gsubind codes in `firm_codes` matched a subindustry in the lookup table, then the result will look identical to the `left_join()` output from Exercise 2.
-
-However, if there were any firms with a gsubind code that did not match a code in subindustry_names, those rows would be dropped in the `inner_join()` version but retained (with NA in subind) in the `left_join()`.
-
-Let's see what these are (and re-inforce what `anti_join()` does):
-
-```{r}
-firm_info %>%
-    anti_join(firm_info_inner, by = "gsubind")
-```
-
-This is equivalent to:
-
-```{r}
-firm_info |> 
-    anti_join(subindustry_names, by = "subind") 
-```
-
-We can confirm that this is a case of a gsubind that we don't get a match on in our lookup table:
-
-```{r}
-subindustry_names |>
-    filter(gsubind == "45101010")
+asx_with_pe <-
+    asx_prices_tidy |>
+    left_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
 ```
 
 **(f).**
 
-1. What does each join keep and drop?
+The join added a new variable, `pe`, to the dataset.
 
-`left_join(x, y)`
+It mainly added a column rather than rows, because we matched one firm-year observation in `asx_tidy` to one firm-year observation in `pe_data`.
 
-* Keeps all rows from x, adds columns from y where there's a match; unmatched rows get NAs.
+**(g).**
 
-`inner_join(x, y)`
+```{r}
+asx_wrong_join <-
+    asx_prices_tidy |>
+    left_join(
+        pe_data,
+        by = join_by(gvkey)
+    )
+```
 
-* Keeps only rows in x that have a match in y (i.e., the intersection).
+This goes wrong because each firm in `asx_tidy` can now match multiple years in `pe_data` for the same firm. That creates duplicated rows and incorrect matches across years.
 
-`anti_join(x, y)`
-
-* Keeps only rows in x that don’t match any row in y.
-
-
-2. Which join helps preserve all rows from one table?
-
-`left_join()`
-
-
-3. Which join is best for finding mismatches?
-
-`anti_join()`
-
-
-4. Which join only keeps complete matches?
-
-`inner_join()`
+For example, a 2023 observation for one firm could be matched not only to its 2023 P/E ratio, but also to that firm’s 2022 or 2024 P/E ratios. So the join runs, but the resulting dataset is no longer correctly aligned at the firm-year level.
 
 :::
 
 :::
 
 :::
+
 <!-- END PROFILE:r-solutions -->
+

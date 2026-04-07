@@ -1,0 +1,200 @@
+### Exercise 5: Comparing Industries with Grouped Summaries
+
+**(a)** We now want to compare valuation patterns across industries.
+
+To do that, we first need to add industry codes to `asx_with_pe`.
+
+Complete the code below to join `subindustry_first`, which you created in Exercise 2, onto `asx_with_pe` using `gvkey`.
+
+```{r}
+#| eval: false
+asx_analysis <-
+    asx_with_pe |>
+    YOUR_CODE(
+        YOUR_CODE,
+        by = YOUR_CODE_HERE
+    )
+```
+
+What new information does this join add?
+
+**(b)** Using `asx_analysis`, create a summary dataset called `industry_year_summary` that does all of the following:
+
+* groups the data by subindustry and year
+* calculates the average P/E ratio
+* calculates the average share price
+* calculates the average EPS
+* calculates the number of firms in each subindustry-year
+
+```{r}
+#| eval: false
+industry_year_summary <-
+    asx_analysis |>
+    YOUR_CODE
+```
+
+**(c)** Why do we need to group by both **subindustry** and **year** here, rather than just one of them?
+
+**(d)** Using `industry_year_summary`, create a scatterplot that does all of the following:
+
+* puts average P/E ratio on the x-axis
+* puts average share price on the y-axis
+* shows one point for each subindustry-year observation
+* includes a summary line describing the pattern in the data
+* includes a clear title and axis labels
+* uses a theme
+* only includes subindustries that have at least 3 firms
+* only includes subindustries with average P/E ratios less than 100
+
+```{r}
+#| eval: false
+industry_year_summary |> 
+    YOUR_CODE
+```
+
+**(e)** What do you notice in the plot?
+
+In a 2-3 sentences, comment on:
+
+* whether industry-year observations with higher average P/E ratios also tend to have higher average share prices
+* whether there are any clear clusters or outliers
+* what kinds of industry differences might help explain the pattern
+
+<!-- BEGIN PROFILE:r-teaching-guide -->
+
+::: {.content-visible when-profile="r-teaching-guide"}
+
+::: {.teaching-block}
+
+::: {.teaching-block-header}
+Teaching Note
+:::
+
+::: {.teaching-block-body}
+
+🎯 **Learning Objective**
+Students should:
+
+* Use a two-variable `group_by()` to summarise a firm-year dataset by industry and year.
+
+* Create grouped summary measures such as average P/E ratio, average share price, average EPS, and firm counts.
+
+* Visualise grouped summary data with a scatterplot.
+
+✅ **Core Concepts to Highlight**
+
+A grouped summary collapses many firm-year observations into a smaller set of industry-year observations.
+
+Using both industry and year in `group_by()` lets students compare industries while still preserving change over time.
+
+Once data are grouped and summarised, each row represents a higher-level unit. Here, each row in `industry_year_summary` represents one industry in one year.
+
+A scatterplot of summary data can reveal broad associations, clusters, and outliers, but it does not establish causality.
+
+💬 **Suggested In-Class Prompts**
+
+* “What does one row mean after we summarise by industry and year?”* 
+
+* “What disappears when we go from firm-year data to industry-year averages?”*
+
+* “Why might two industries have similar average prices but very different average P/E ratios?”*
+
+* “What would be hidden if we averaged over all years at once?”*
+
+📌 **Common Misunderstandings**
+
+Students may group only by industry or only by year, rather than both.
+
+Students may forget that after summarising, the dataset no longer contains one row per firm-year.
+
+Students may confuse the number of firms with the number of rows in the original data.
+
+Students may over-interpret the scatterplot as showing a strong economic mechanism rather than a descriptive association.
+
+Students may make overly strong claims about share prices without recognising that prices are not directly comparable in every possible economic sense.
+
+:::
+
+:::
+
+:::
+
+<!-- END PROFILE:r-teaching-guide -->
+
+<!-- BEGIN PROFILE:r-solutions -->
+
+::: {.content-visible when-profile="r-solutions" when-profile="r-teaching-guide"}
+
+::: {.solution-block}
+
+::: {.solution-block-header}
+Solution
+:::
+
+::: {.solution-block-body}
+
+**(a).**
+
+```{r}
+asx_analysis <-
+    asx_with_pe |>
+    left_join(
+        subindustry_first |> select(-conm),
+        by = join_by(gvkey)
+    )
+```
+
+This join adds firm code information based on `gsubind`, so the analysis dataset now carries the industry classification needed for grouped summaries.
+
+**(b).**
+
+```{r}
+industry_year_summary <-
+    asx_analysis |>
+    # remark adding subind just keeps us the human readable names
+    group_by(gsubind, subind, fyear) |>
+    summarise(
+        avg_pe = mean(pe, na.rm = TRUE),
+        avg_price = mean(price, na.rm = TRUE),
+        avg_eps = mean(eps, na.rm = TRUE),
+        n_firms = n()
+    )
+```
+
+**(c).**
+
+We need to group by both industry and year because we want each row in the summary dataset to represent one industry in one year. Grouping only by industry would average across all years, and grouping only by year would average across all industries. Using both variables lets us compare industries while still keeping track of time.
+
+**(d).**
+
+```{r}
+#| warning: false
+industry_year_summary |>
+    filter(n_firms >= 3, avg_pe < 100) |>
+    ggplot(aes(x = avg_pe, y = avg_price)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", color = "blue", se = FALSE) +
+    labs(
+        title = "Average Share Price vs Average P/E Ratio by Industry-Year",
+        x = "Average P/E Ratio",
+        y = "Average Share Price"
+    ) +
+    theme_minimal()
+```
+
+**(e).**
+
+The plot shows whether industry-year observations with higher average P/E ratios also tend to have higher average share prices, but the relationship is not necessarily very tight. 
+
+Some industries may cluster together, while others may stand out as outliers with unusually high average prices or valuation multiples.
+
+Industry differences in growth expectations, profitability, risk, or business model may help explain why some industry-year observations sit in different parts of the plot.
+
+
+:::
+
+:::
+
+:::
+
+<!-- END PROFILE:r-solutions -->

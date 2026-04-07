@@ -4,13 +4,6 @@
 #| warning: false
 #| echo: false
 library(tidyverse)
-library(ggplot2)
-library(scales) 
-library(ggokabeito)
-library(ggthemes) 
-library(patchwork) 
-library(stringr)
-library(knitr)
 ```
 
 ```{r}
@@ -44,8 +37,8 @@ if (!file.exists(destfile)) {
 # Load the data
 asx_200_2024 <- read_csv(destfile)
 # Wrangle
-firm_codes <- 
-    asx_200_2024 |> 
+firm_codes <-
+    asx_200_2024 |>
     select(gvkey, conm, gsubind)
 
 # Define URL and destination file path
@@ -68,84 +61,44 @@ if (!file.exists(destfile)) {
 # Load the data
 pe_data <- read_csv(destfile)
 # Wrangle data
-pe_data <- 
-    pe_data |> 
+pe_data <-
+    pe_data |>
     select(gvkey, fyear, pe) |>
-    filter(!is.na(pe)) |> 
+    filter(!is.na(pe)) |>
     arrange(gvkey, fyear)
-
 ```
 
-### The Topic: How well do Australian firms' earnings explain what investors are willing to pay for these companies? {.unnumbered}
+### The Topic: What shapes how the market values Australian firms? {.unnumbered}
 
-Share prices of Australia’s biggest companies go up and down every day. These changes reflect how investors feel about the company’s future earnings — based on news, forecasts, and the broader economy.
+Investors do not just care about whether a company is profitable. They also care about how much they are paying for those earnings.
 
-Two key numbers help us understand this:
+In this tutorial, we will work with data on large Australian firms to explore a simple question:
 
-Earnings per share (EPS), tells us how much profit a company earns for each share:
+**How strongly are share prices and valuation ratios related to company earnings, and how do those patterns vary across firms and industries?**
+
+To answer that question, we first need to prepare the data. Some of the financial variables are stored in a messy wide format, and other information is spread across separate files. So before we can analyse anything, we need to:
+
+* reshape the data into tidy form
+* join together firm, industry, and valuation data
+* check what information is missing after those joins
+
+Two key variables in today’s tutorial are:
 
 $$
 \text{EPS} = \frac{\text{Profit}}{\text{Shares Outstanding}}
 $$
 
-The Price-to-Earnings (P/E) Ratio shows how much investors are willing to pay for \$1 of earnings:
+EPS tells us how much profit a company earns for each share.
 
 $$
 \text{P/E} = \frac{\text{Share Price}}{\text{EPS}}
 $$
 
-To tie these measures back to our earlier material on firm's Earnings Before Interest and Taxes (EBIT), we can define firm's earnings that are ultimately paid out to shareholders as follows:
+The P/E ratio tells us how much investors are willing to pay for each dollar of earnings.
 
-$$
-\text{Earnings} = \text{EBIT} - \text{Interest} - \text{Taxes}
-$$
+By the end of the tutorial, you will have built and explored a dataset that lets you compare firms and industries using share prices, earnings, and valuation ratios.
 
-We'll use real data from major Australian companies listed on the ASX to practise cleaning, combining, and analysing financial variables like EPS and the P/E ratio. In particular we will:
-
--   Tidy messy financial data
--   Join multiple datasets together
-
-### The Data: Stock Price Data from Yahoo Finance
-
-Here’s a simplified and more student-friendly version:
-
-------------------------------------------------------------------------
-
-### The Data: Share Prices and Earnings
-
-We'll be using real data on Australian companies from Yahoo Finance. It includes key financial info:
-
--   `gvkey`: a unique company ID we can use to match data across files
--   `price`: each company’s share price at the end of the year
--   `eps`: earnings per share – how much profit each share earns
--   `pe`: price-to-earnings ratio – how much investors are paying per dollar of earnings
-
-We also have a separate file with industry details:
-
--   `gsubind`: a code showing what industry a company is in
--   `subind`: the name of that industry (like "Gold" or "Construction & Engineering")
-
-Together, these files let us compare company valuations and see how they differ across industries.
-
-### The Method: Shaping and Combining Data with `tidyr` and `dplyr`
-
-Data often needs cleaning before it's ready to analyse. It might be too wide (with different years in separate columns), too long, or split across multiple files.
-
-In this tutorial, we’ll use two tidyverse tools to fix that:
-
--   **`tidyr`**: to reshape messy data using functions like `pivot_longer()`
--   **`dplyr`**: to join different datasets together and spot what's missing
-
-These tools will help us:
-
--   Make messy data easier to work with
--   Combine company data with industry labels
-
-### Getting set up and loading the data
-
-## Loading the Data
-
-### R packages for today {.unnumbered}
+## R packages for today {.unnumbered}
 
 ```{r}
 #| eval: false
