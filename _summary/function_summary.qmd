@@ -1,0 +1,282 @@
+## Key R functions used in this notebook
+
+This page collects every new R function you used in this tutorial, in one place, as a quick-reference glossary. Each function below follows the same format:
+
+- **Package:** where the function comes from. Most functions you'll meet early on are **Base R** (built into R, no setup needed). Others live in packages that must be loaded first with `library()`.
+- **What it does:** a plain-English explanation, no jargon.
+- **Why you'd use it:** the everyday analyst reason you'd reach for it.
+- **Arguments:** the inputs you put inside the parentheses `()` to tell the function exactly what to work on. Some are required, some are optional. Arguments listed here are not necessarily exhaustive.
+- **Example:** the function used on this tutorial's own ASX share price and firm data.
+
+For more information on any function, use ?`function_name` in the R console (e.g. `?pivot_longer`) to see the official documentation, which includes a full list of arguments, descriptions, and often many examples.
+
+### `is.na()`
+
+**Package:** Base R
+
+**What it does:** Checks each value in a column and returns `TRUE` if it is missing (`NA`), or `FALSE` if it isn't.
+
+**Why you'd use it:** To count how many values are missing, or to keep/drop rows depending on whether a value is missing.
+
+**Arguments:**
+
+- `x` — the value or column you want to check for missingness.
+
+**Example:**
+
+```{r}
+#| eval: false
+# Keep only rows where the P/E ratio is not missing
+pe_data <-
+    pe_data |>
+    filter(!is.na(pe))
+```
+
+### `theme_minimal()`
+
+**Package:** ggplot2
+
+**What it does:** Applies a clean, uncluttered visual style to a plot, removing the default grey background.
+
+**Why you'd use it:** To make charts easier to read and more presentable, for example before sharing them with a manager.
+
+**Arguments:**
+
+- none used in this tutorial.
+
+**Example:**
+
+```{r}
+#| eval: false
+asx_prices_tidy |>
+    ggplot(aes(x = eps, y = price)) +
+    geom_point(alpha = 0.4) +
+    theme_minimal()
+```
+
+### `left_join()`
+
+**Package:** dplyr
+
+**What it does:** Combines two data frames by matching rows on a shared column (or columns). Every row from the left-hand (first) data frame is kept, and matching columns from the right-hand data frame are added on. If there's no match, the new columns are filled with missing values (`NA`).
+
+**Why you'd use it:** To bring extra information, such as subindustry names or P/E ratios, into your main dataset without losing any of your original rows.
+
+**Arguments:**
+
+- `x` — the left-hand data frame (usually piped in with `|>`). All of its rows are kept.
+- `y` — the right-hand data frame you're pulling extra columns from.
+- `by` — which column(s) to match rows on, set with `join_by()`.
+
+**Example:**
+
+```{r}
+#| eval: false
+firm_info <-
+    firm_codes |>
+    left_join(subindustry_names, by = join_by(gsubind))
+```
+
+### `join_by()`
+
+**Package:** dplyr
+
+**What it does:** Tells a join function, like `left_join()`, `inner_join()`, or `anti_join()`, which column(s) to use to match rows between two data frames.
+
+**Why you'd use it:** Every join needs a shared "key" column to match on. When one column isn't enough to uniquely identify a row, you can list more than one.
+
+**Arguments:**
+
+- `...` — the column name(s) shared by both data frames, e.g. `gvkey` alone, or `gvkey, fyear` together.
+
+**Example:**
+
+```{r}
+#| eval: false
+# Match on both firm and year, since asx_prices_tidy has one row per firm-year
+asx_with_pe <-
+    asx_prices_tidy |>
+    left_join(pe_data, by = join_by(gvkey, fyear))
+```
+
+### `as.numeric()`
+
+**Package:** Base R
+
+**What it does:** Converts a column stored as text into numbers.
+
+**Why you'd use it:** After reshaping data, new columns like a year extracted from a column name often come out as text. Converting them to numbers lets you filter and calculate with them properly.
+
+**Arguments:**
+
+- `x` — the value or column you want to convert to a number.
+
+**Example:**
+
+```{r}
+#| eval: false
+# fyear comes out of pivot_longer() as text, so convert it to a number
+asx_prices_tidy <-
+    asx_prices_tidy |>
+    mutate(fyear = as.numeric(fyear))
+```
+
+### `pivot_longer()`
+
+**Package:** tidyr
+
+**What it does:** Reshapes "wide" data, where the same variable is spread across many columns, into "long" (tidy) form, where each row is one observation and each column is one variable.
+
+**Why you'd use it:** It's the central tool for tidying data in this tutorial. Once your data is tidy, summarising, filtering, and plotting all become much simpler and scale better as more years of data are added.
+
+**Arguments:**
+
+- `cols` — which columns to reshape, e.g. all columns starting with `"price"` or `"eps"`.
+- `names_to` — the name(s) of the new column(s) built from the old column names. Using `".value"` as one of the names splits the measure (like `price` or `eps`) from the rest.
+- `names_sep` — the character that separates the pieces inside the old column names, e.g. `"_"` in `price_2023`.
+- `values_drop_na` — *(optional)* set to `TRUE` to drop rows created only because a value was missing.
+
+**Example:**
+
+```{r}
+#| eval: false
+asx_prices_tidy <-
+    asx_prices_messy |>
+    pivot_longer(
+        cols = starts_with("price") | starts_with("eps"),
+        names_to = c(".value", "fyear"),
+        names_sep = "_",
+        values_drop_na = TRUE
+    ) |>
+    mutate(fyear = as.numeric(fyear))
+```
+
+### `starts_with()`
+
+**Package:** tidyselect (bundled with dplyr and tidyr, loaded with `library(tidyverse)`)
+
+**What it does:** Selects every column whose name begins with a given piece of text.
+
+**Why you'd use it:** To grab a whole group of similarly-named columns, like all the `price_...` and `eps_...` columns, without typing out every year by hand.
+
+**Arguments:**
+
+- `match` — the text the column name should start with, in quotation marks, e.g. `"price"`.
+
+**Example:**
+
+```{r}
+#| eval: false
+# Select all columns that start with "price" or "eps"
+asx_prices_messy |>
+    select(starts_with("price") | starts_with("eps"))
+```
+
+### `inner_join()`
+
+**Package:** dplyr
+
+**What it does:** Combines two data frames by matching rows on a shared column, but keeps only the rows that have a match in *both* data frames.
+
+**Why you'd use it:** To keep only complete, fully-matched observations, for example firm-years that have a P/E ratio available.
+
+**Arguments:**
+
+- `x` — the left-hand data frame (usually piped in with `|>`).
+- `y` — the right-hand data frame you're matching against.
+- `by` — which column(s) to match rows on, set with `join_by()`.
+
+**Example:**
+
+```{r}
+#| eval: false
+asx_with_pe_inner <-
+    asx_prices_tidy |>
+    inner_join(pe_data, by = join_by(gvkey, fyear))
+```
+
+### `anti_join()`
+
+**Package:** dplyr
+
+**What it does:** Combines two data frames by matching rows on a shared column, but keeps only the rows from the left-hand data frame that do *not* have a match in the right-hand one.
+
+**Why you'd use it:** To audit missing data, for example finding out which firm-year observations failed to find a matching P/E ratio.
+
+**Arguments:**
+
+- `x` — the left-hand data frame (usually piped in with `|>`). Only its unmatched rows are kept.
+- `y` — the right-hand data frame you're checking for matches against.
+- `by` — which column(s) to match rows on, set with `join_by()`.
+
+**Example:**
+
+```{r}
+#| eval: false
+missing_pe <-
+    asx_prices_tidy |>
+    anti_join(pe_data, by = join_by(gvkey, fyear))
+```
+
+### `count()`
+
+**Package:** dplyr
+
+**What it does:** Counts how many rows fall into each unique value of a column.
+
+**Why you'd use it:** For a quick frequency tally, for example checking whether missing P/E ratios are concentrated in particular years.
+
+**Arguments:**
+
+- `...` — the column(s) to count by, e.g. `fyear` or `conm`.
+
+**Example:**
+
+```{r}
+#| eval: false
+missing_pe |>
+    count(fyear)
+```
+
+### `min()`
+
+**Package:** Base R
+
+**What it does:** Finds the smallest value in a set of numbers.
+
+**Why you'd use it:** To spot the lowest value in a column, for example the lowest EPS among firms with a missing P/E ratio.
+
+**Arguments:**
+
+- `x` — the numeric value(s) or column to find the minimum of.
+- `na.rm` — *(optional)* set to `TRUE` to ignore missing values instead of letting them break the calculation.
+
+**Example:**
+
+```{r}
+#| eval: false
+missing_pe |>
+    summarise(min_eps = min(eps, na.rm = TRUE))
+```
+
+### `max()`
+
+**Package:** Base R
+
+**What it does:** Finds the largest value in a set of numbers.
+
+**Why you'd use it:** To spot the highest value in a column, for example the highest EPS among firms with a missing P/E ratio.
+
+**Arguments:**
+
+- `x` — the numeric value(s) or column to find the maximum of.
+- `na.rm` — *(optional)* set to `TRUE` to ignore missing values instead of letting them break the calculation.
+
+**Example:**
+
+```{r}
+#| eval: false
+missing_pe |>
+    summarise(max_eps = max(eps, na.rm = TRUE))
+```
+
