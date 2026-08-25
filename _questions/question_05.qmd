@@ -1,64 +1,111 @@
-### Exercise 5: Comparing Industries with Grouped Summaries
+<!-- question-type: inclass -->
+### Exercise 5: Adding P/E Ratios and Checking What You Got
 
-**(a)** We now want to compare valuation patterns across industries.
+You now know what `left_join()`, `inner_join()` and `anti_join()` do, and why a join key has to match the observational unit. In this exercise you will apply all of that to the full ASX dataset.
 
-To do that, we first need to add industry codes to `asx_with_pe`.
-
-Complete the code below to join `firm_info`, which you created in Exercise 2, onto `asx_with_pe` using `gvkey`.
+Run the code below to load and prepare the P/E ratio data.
 
 ```{r}
 #| eval: false
-asx_analysis <-
-    asx_with_pe |>
-    YOUR_CODE(
-        YOUR_CODE,
+
+pe_data <-
+    read_csv("data/pe.csv") |>
+    select(gvkey, fyear, pe) |>
+    filter(!is.na(pe)) |>
+    arrange(gvkey, fyear)
+```
+
+**(a)** Before joining anything, work out what you are joining.
+
+* What does one row of `asx_prices_tidy` represent, and which variable or variables together identify it?
+* What does one row of `pe_data` represent?
+* Which variables should you therefore join on?
+
+**(b)** Complete the code below to add the `pe` variable from `pe_data` to `asx_prices_tidy`.
+
+```{r}
+#| eval: false
+asx_with_pe <-
+    asx_prices_tidy |>
+    left_join(
+        pe_data,
         by = YOUR_CODE_HERE
     )
 ```
 
-What new information does this join add?
+Did the join add rows, columns, or both?
 
-**(b)** Using `asx_analysis`, create a summary dataset called `industry_year_summary` that does all of the following:
-
-* groups the data by subindustry and year
-* calculates the average P/E ratio
-* calculates the average share price
-* calculates the average EPS
-* calculates the number of firms in each subindustry-year
+**(c)** A join is not finished until you have checked what it did. Run the two other joins on the same pair of tables.
 
 ```{r}
 #| eval: false
-industry_year_summary <-
-    asx_analysis |>
-    YOUR_CODE
+asx_with_pe_inner <-
+    asx_prices_tidy |>
+    inner_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+
+missing_pe <-
+    asx_prices_tidy |>
+    anti_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
 ```
 
-**(c)** Why do we need to group by both **subindustry** and **year** here, rather than just one of them?
-
-**(d)** Using `industry_year_summary`, create a scatterplot that does all of the following:
-
-* puts average P/E ratio on the x-axis
-* puts average share price on the y-axis
-* shows one point for each subindustry-year observation
-* includes a summary line describing the pattern in the data
-* includes a clear title and axis labels
-* uses a theme
-* only includes subindustries that have at least 3 firms
-* only includes subindustries with average P/E ratios less than 100
+Now compare the row counts.
 
 ```{r}
 #| eval: false
-industry_year_summary |> 
-    YOUR_CODE
+nrow(asx_prices_tidy)
+nrow(asx_with_pe)
+nrow(asx_with_pe_inner)
+nrow(missing_pe)
 ```
 
-**(e)** What do you notice in the plot?
+* Which two of these four numbers are equal, and why must they be?
+* Which two add up to the total, and why must they?
 
-In a 2-3 sentences, comment on:
+**(d)** Using those row counts, what share of firm-year observations actually have a P/E ratio?
 
-* whether industry-year observations with higher average P/E ratios also tend to have higher average share prices
-* whether there are any clear clusters or outliers
-* what kinds of industry differences might help explain the pattern
+Is that higher or lower than you expected before you looked?
+
+**(e)** A quarter of the data is a lot to lose without knowing why. Investigate `missing_pe` to work out where the gaps are.
+
+Two things worth checking: whether the missing observations are concentrated in particular years...
+
+```{r}
+#| eval: false
+missing_pe |>
+    YOUR_CODE(fyear)
+```
+
+and whether they differ from the matched observations in some other way, for example, whether they differ in their earnings per share.
+ 
+```{r}
+#| eval: false
+missing_pe |>
+    summarise(
+        n = n(),
+        min_eps = YOUR_CODE_HERE(eps, na.rm = TRUE),
+        max_eps = YOUR_CODE_HERE(eps, na.rm = TRUE),
+        avg_eps = YOUR_CODE_HERE(eps, na.rm = TRUE)
+    )
+```
+
+```{r}
+#| eval: false
+asx_with_pe_inner |>
+    summarise(
+        n = n(),
+        min_eps = YOUR_CODE_HERE(eps, na.rm = TRUE),
+        max_eps = YOUR_CODE_HERE(eps, na.rm = TRUE),
+        avg_eps = YOUR_CODE_HERE(eps, na.rm = TRUE)
+    )
+```
+
+Write one or two short findings, then suggest an explanation for what you found.
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 
@@ -75,43 +122,51 @@ Teaching Note
 🎯 **Learning Objective**
 Students should:
 
-* Use a two-variable `group_by()` to summarise a firm-year dataset by industry and year.
+* Choose a join key by reasoning about the observational unit rather than by pattern-matching on column names.
 
-* Create grouped summary measures such as average P/E ratio, average share price, average EPS, and firm counts.
+* Apply `left_join()`, `inner_join()` and `anti_join()` to a realistic dataset, having met all three on the toy tables in Exercise 4.
 
-* Visualise grouped summary data with a scatterplot.
+* Use row counts as an arithmetic check on a join.
+
+* Discover that missing data has structure, and form a hypothesis about its cause.
 
 ✅ **Core Concepts to Highlight**
 
-A grouped summary collapses many firm-year observations into a smaller set of industry-year observations.
+The join key follows from the observational unit. Both tables are firm-year, so the key is `gvkey` and `fyear` together. This is the same argument students just made on three rows in Exercise 4(f).
 
-Using both industry and year in `group_by()` lets students compare industries while still preserving change over time.
+The row counts are not decoration, they are an identity: `left` equals the original, and `inner` plus `anti` equals the original. If those do not hold, something is wrong.
 
-Once data are grouped and summarised, each row represents a higher-level unit. Here, each row in `industry_year_summary` represents one industry in one year.
+P/E coverage here is only about 25%. This is the number that should make students uncomfortable, and part (e) is where that discomfort becomes a finding.
 
-A scatterplot of summary data can reveal broad associations, clusters, and outliers, but it does not establish causality.
+The missingness is not random. Mean EPS among the unmatched firm-years is negative, while among the matched it is positive. P/E is not meaningful when earnings are negative, so the data provider has almost certainly filtered those out.
+
+This is the payoff of the whole tutorial: the joins are not just plumbing, they are how you find out whether your data can answer your question.
 
 💬 **Suggested In-Class Prompts**
 
-* “What does one row mean after we summarise by industry and year?”* 
+*"You have 9,484 rows and 2,407 P/E ratios. Do you still want to run this analysis?"*
 
-* “What disappears when we go from firm-year data to industry-year averages?”*
+*"Is the missing quarter missing at random? How would you check?"*
 
-* “Why might two industries have similar average prices but very different average P/E ratios?”*
+*"What is different about a firm with no P/E ratio?"*
 
-* “What would be hidden if we averaged over all years at once?”*
+*"If you reported the inner-join sample only, which firms would silently disappear from your report?"*
 
 📌 **Common Misunderstandings**
 
-Students may group only by industry or only by year, rather than both.
+Students may reach for `gvkey` alone out of habit. Send them back to Exercise 4(e) rather than explaining it again.
 
-Students may forget that after summarising, the dataset no longer contains one row per firm-year.
+Students may report the coverage number without reacting to it. Push them to say whether 25% is acceptable.
 
-Students may confuse the number of firms with the number of rows in the original data.
+Students may treat the missing values as a coding mistake on their part. They are a property of the supplied file.
 
-Students may over-interpret the scatterplot as showing a strong economic mechanism rather than a descriptive association.
+Students may find the year pattern (fairly flat) and stop there. The year counts are the less interesting finding; the EPS comparison is the one that explains the mechanism.
 
-Students may make overly strong claims about share prices without recognising that prices are not directly comparable in every possible economic sense.
+Students may not think to compare the missing group against the matched group. Suggest computing the same statistic on both.
+
+⏱️ **Timing**
+
+**25 minutes.** Parts (a) to (d) are quick if Exercise 4 landed, so budget most of the time for (e) and discussion of selection effects and the importance of understanding your data.
 
 :::
 
@@ -135,61 +190,105 @@ Solution
 
 **(a).**
 
-```{r}
-asx_analysis <-
-    asx_with_pe |>
-    left_join(
-        firm_info |> select(-conm),
-        by = join_by(gvkey)
-    )
-```
+One row of `asx_prices_tidy` represents one firm in one year, so it takes `gvkey` and `fyear` together to identify it.
 
-This join adds firm code information based on `gvkey`, so the analysis dataset now carries the industry classification needed for grouped summaries.
+One row of `pe_data` also represents one firm in one year, giving the P/E ratio for that firm-year.
+
+Because both tables are at the firm-year level, the join key must be `gvkey` and `fyear` together — exactly the situation from Exercise 4(f).
 
 **(b).**
 
 ```{r}
-industry_year_summary <-
-    asx_analysis |>
-    # remark adding subind just keeps us the human readable names
-    group_by(gsubind, subind, fyear) |>
-    summarise(
-        avg_pe = mean(pe, na.rm = TRUE),
-        avg_price = mean(price, na.rm = TRUE),
-        avg_eps = mean(eps, na.rm = TRUE),
-        n_firms = n()
+asx_with_pe <-
+    asx_prices_tidy |>
+    left_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
     )
 ```
 
+The join added a column (`pe`) and left the number of rows unchanged, because each firm-year in `asx_prices_tidy` matched at most one firm-year in `pe_data`.
+
 **(c).**
 
-We need to group by both industry and year because we want each row in the summary dataset to represent one industry in one year. Grouping only by industry would average across all years, and grouping only by year would average across all industries. Using both variables lets us compare industries while still keeping track of time.
+```{r}
+asx_with_pe_inner <-
+    asx_prices_tidy |>
+    inner_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+
+missing_pe <-
+    asx_prices_tidy |>
+    anti_join(
+        pe_data,
+        by = join_by(gvkey, fyear)
+    )
+```
+
+```{r}
+nrow(asx_prices_tidy)
+nrow(asx_with_pe)
+nrow(asx_with_pe_inner)
+nrow(missing_pe)
+```
+
+`asx_prices_tidy` and `asx_with_pe` have the same number of rows (9,484), because a `left_join()` keeps every row on the left whether it matched or not.
+
+`asx_with_pe_inner` (2,407) and `missing_pe` (7,077) sum to 9,484. They must, because every firm-year either found a match or did not, and the inner join keeps the first group while the anti join keeps the second.
 
 **(d).**
 
 ```{r}
-#| warning: false
-industry_year_summary |>
-    filter(n_firms >= 3, avg_pe < 100) |>
-    ggplot(aes(x = avg_pe, y = avg_price)) +
-    geom_point(alpha = 0.7) +
-    geom_smooth(method = "lm", color = "blue", se = FALSE) +
-    labs(
-        title = "Average Share Price vs Average P/E Ratio by Industry-Year",
-        x = "Average P/E Ratio",
-        y = "Average Share Price"
-    ) +
-    theme_minimal()
+nrow(asx_with_pe_inner) / nrow(asx_prices_tidy)
 ```
+
+Only about **25%** of firm-year observations have a P/E ratio. Roughly three quarters of the dataset has no `pe` value at all.
+
+Most students expect a much higher number, and that gap is the point. A join that "worked" has still left us with a variable we can use for only a quarter of the sample.
 
 **(e).**
 
-The plot shows whether industry-year observations with higher average P/E ratios also tend to have higher average share prices, but the relationship is not necessarily very tight. 
+First, check whether the gaps cluster by year.
 
-Some industries may cluster together, while others may stand out as outliers with unusually high average prices or valuation multiples.
+```{r}
+missing_pe |>
+    count(fyear)
+```
 
-Industry differences in growth expectations, profitability, risk, or business model may help explain why some industry-year observations sit in different parts of the plot.
+The missing observations are spread fairly evenly across years, from 993 in 2024 to 1,286 in 2022. So the problem is not that the P/E file covers a shorter time period.
 
+That suggests looking at the firms rather than the years. Comparing EPS between the matched and unmatched groups is revealing.
+
+```{r}
+missing_pe |>
+    summarise(
+        n = n(),
+        min_eps = min(eps, na.rm = TRUE),
+        max_eps = max(eps, na.rm = TRUE),
+        avg_eps = mean(eps, na.rm = TRUE)
+    )
+```
+
+```{r}
+asx_with_pe_inner |>
+    summarise(
+        n = n(),
+        min_eps = min(eps, na.rm = TRUE),
+        max_eps = max(eps, na.rm = TRUE),
+        avg_eps = mean(eps, na.rm = TRUE)
+    )
+```
+
+Two findings:
+
+* Missing P/E ratios are spread across all six years, so this is not a time-coverage problem.
+* Average EPS is **negative** (about −0.42) among the firm-years with no P/E ratio, but **positive** (about +0.34) among those with one. Every observation in the missing group has EPS of at most 2.05, while the matched group extends much higher.
+
+The likely explanation is that P/E is not a meaningful statistic when earnings are negative — dividing a positive price by a negative EPS gives a negative ratio that cannot be interpreted as "years of earnings". The provider has almost certainly dropped or suppressed those firm-years, which also fits the many small, loss-making firms on the ASX.
+
+This matters for analysis: the firms we can compute P/E for are systematically the profitable ones. Any conclusion drawn from the inner-join sample is a conclusion about profitable firms, not about the ASX as a whole.
 
 :::
 

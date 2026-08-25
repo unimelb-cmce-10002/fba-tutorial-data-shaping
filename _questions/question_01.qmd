@@ -1,11 +1,14 @@
 <!-- question-type: prepare -->
 ### Exercise 1: Identifying Issues with Untidy Data
 
-We will start with a deliberately messy version of the ASX stock price data. Run the following code to load the dataset.
+We will start with a deliberately messy version of the ASX stock price data. Run the following code to load all of our data.
 
 ```{r}
 #| eval: false
-asx_prices_messy <- read_csv("data/asx_prices_messy.csv")
+asx_prices_messy <- read_csv("data/asx_prices_messy.csv")  # stock price data
+firm_codes <- read_csv("data/asx_200_2024.csv") |>
+    select(gvkey, conm, gsubind)  # firm codes and names
+subindustry_names <- read_csv("data/GICS_subindustry.csv")  # subindustry names
 ```
 
 Then inspect a subset of the data:

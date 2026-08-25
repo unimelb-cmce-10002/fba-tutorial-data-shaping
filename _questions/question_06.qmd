@@ -1,83 +1,92 @@
-### Exercise 6: Auditing Missing P/E Ratios Before an Analytics Meeting
+<!-- question-type: inclass -->
+### Exercise 6: Comparing Industries with Grouped Summaries
 
-Suppose your team is preparing for an analytics meeting. You have built a firm-year dataset with share prices, earnings, and P/E ratios, but many firm-year observations still have missing `pe` values.
+**(a)** We now want to compare valuation patterns across industries.
 
-Before moving ahead, you want to understand:
+To do that, we first need to add industry codes to `asx_with_pe`.
 
-* what the full dataset looks like
-* what the complete-match dataset looks like
-* which observations are missing P/E
-* what you should ask the data team before continuing
-
-**(a)** In Exercise 4, we used a `left_join()` to add P/E ratios from `pe_data` to `asx_tidy`.
-
-What happened to the rows in `asx_tidy` that did **not** have a matching P/E ratio in `pe_data`? Briefly explain what the join did in those cases.
-
-**(b)** Run the code below, which uses a different kind of join, called `inner_join()`.
+Complete the code below to join `firm_info` onto `asx_with_pe` using `gvkey`.
 
 ```{r}
 #| eval: false
-asx_with_pe_inner <-
-    asx_prices_tidy |>
-    inner_join(
-        pe_data,
-        by = join_by(gvkey, fyear)
+
+# recreating firm_info for those that did not successfully complete exercise 2
+firm_info <-
+    firm_codes |>
+    left_join(subindustry_names, by = join_by(gsubind))
+
+# new join
+asx_analysis <-
+    asx_with_pe |>
+    YOUR_CODE(
+        YOUR_CODE,
+        by = YOUR_CODE_HERE
     )
 ```
 
-How is `asx_with_pe_inner` different from `asx_with_pe`? What does `inner_join()` keep that `left_join()` does not?
+What new information does the last join add to our previous dataset?
 
-**(c)** Run the code below, which uses another kind of join, called `anti_join()`.
+**(b)** Using `asx_analysis`, create a summary dataset called `industry_year_summary` that does all of the following:
+
+* groups the data by subindustry and year
+* calculates the average P/E ratio
+* calculates the average share price
+* calculates the average EPS
+* calculates the number of firms in each subindustry-year
 
 ```{r}
 #| eval: false
-missing_pe <-
-    asx_prices_tidy |>
-    anti_join(
-        pe_data,
-        by = join_by(gvkey, fyear)
+industry_year_summary <-
+    asx_analysis |>
+    YOUR_CODE(gsubind, subind, YOUR_VARIABLE) |>
+    summarise(
+        avg_pe    = YOUR_CODE_HERE,
+        avg_price = YOUR_CODE_HERE,
+        avg_eps   = YOUR_CODE_HERE,
+        n_firms   = YOUR_CODE_HERE,
+        .groups   = "drop"
     )
 ```
 
-What does `missing_pe` represent? How is this different from the dataset created with `inner_join()` in part (b)?
+::: {.callout-note}
+Group by `gsubind` and `subind` together. The code identifies the subindustry, and carrying the name along keeps the output readable.
+:::
 
-**(d)** Compare the number of rows in the following datasets.
+**(c)** Using `industry_year_summary`, create a scatterplot that does all of the following:
+
+* only includes subindustries that have at least 4 firms
+* only includes subindustries with average P/E ratios less than 100
+* puts average P/E ratio on the x-axis
+* puts average share price on the y-axis
+* shows one point for each subindustry-year observation, with colour varying with subindustry
+* includes a line-of-best-fit describing the pattern in the data
+* includes a clear title and axis labels
+* uses a theme
 
 ```{r}
 #| eval: false
-nrow(asx_prices_tidy)
-nrow(asx_with_pe)
-nrow(asx_with_pe_inner)
-nrow(missing_pe)
+industry_year_summary |>
+    # keep only the subindustry-years you want to plot
+    filter(n_firms >= YOUR_CODE, avg_pe < YOUR_CODE, !is.na(subind)) |>
+    # put average P/E on the x-axis and average price on the y-axis
+    ggplot(aes(x = YOUR_VARIABLE, y = YOUR_VARIABLE)) +
+    # one point per subindustry-year, coloured by subindustry
+    YOUR_CODE +
+    # add a straight summary line
+    YOUR_CODE +
+    # add a title and axis labels
+    YOUR_CODE +
+    # use a theme
+    YOUR_CODE
 ```
 
-What do you notice? What does this tell you about how much of the firm-year dataset has valid P/E coverage?
+**(d)** What do you notice in the plot?
 
+In a 2-3 sentences, comment on:
 
-**(e)** Look at the observations in `missing_pe`.
-
-Use code to investigate whether missing P/E ratios seem to be concentrated in certain years or associated with certain EPS values.
-Write one or two short findings based on what you see.
-
-**(f)** The `pe_data` file was provided to us as a separate dataset.
-
-Why might some firm-year observations in `asx_tidy` still fail to find a matching P/E ratio in that file, even when `price` and `eps` are present?
-
-In your answer, think about possible differences in:
-
-* which firms were included
-* which years were covered
-* how P/E ratios were defined or filtered before the file was given to us
-
-**(g)** Suppose you are preparing for a meeting with the data team before using `pe` in your analysis.
-
-What are two or three specific questions you would ask to check whether the missing P/E values reflect:
-
-* a normal feature of the data
-* a difference in firm or year coverage
-* a problem in how the file was sourced or matched
-
-If the missing values seem to come from incomplete firm coverage, what might your team do next to source the missing data?
+* whether industry-year observations with higher average P/E ratios also tend to have higher average share prices
+* whether there are any clear clusters or outliers
+* what kinds of industry differences might help explain the pattern
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 
@@ -94,43 +103,47 @@ Teaching Note
 🎯 **Learning Objective**
 Students should:
 
-* Explain what happens to unmatched rows under a `left_join()`.
+* Use a two-variable `group_by()` to summarise a firm-year dataset by industry and year.
 
-* Interpret the outputs of `inner_join()` and `anti_join()` when auditing data coverage.
+* Create grouped summary measures such as average P/E ratio, average share price, average EPS, and firm counts.
 
-* Compare full-sample, matched-sample, and unmatched observations in a firm-year dataset.
-
-* Use join outputs to think critically about missing data before proceeding with analysis.
+* Visualise grouped summary data with a scatterplot.
 
 ✅ **Core Concepts to Highlight**
 
-A `left_join()` keeps all rows from the left-hand dataset and adds matching values where available. Unmatched rows stay in the dataset with missing values.
+A grouped summary collapses many firm-year observations into a smaller set of industry-year observations.
 
-An `inner_join()` keeps only rows that have a match in both datasets.
+Using both industry and year in `group_by()` lets students compare industries while still preserving change over time.
 
-An `anti_join()` keeps only rows from the left-hand dataset that do not have a match in the right-hand dataset.
+Once data are grouped and summarised, each row represents a higher-level unit. Here, each row in `industry_year_summary` represents one industry in one year.
 
-These joins are not only tools for combining data. They are also tools for checking data readiness and diagnosing missing coverage.
+A scatterplot of summary data can reveal broad associations, clusters, and outliers, but it does not establish causality.
 
 💬 **Suggested In-Class Prompts**
 
-*“What is the difference between a missing value after a left join and a row disappearing in an inner join?”*
+* “What does one row mean after we summarise by industry and year?”* 
 
-*“If you only analysed the inner-join sample, what observations would you be throwing away?”*
+* “What disappears when we go from firm-year data to industry-year averages?”*
 
-*“What kinds of business or data-construction reasons could explain missing P/E ratios?”*
+* “Why might two industries have similar average prices but very different average P/E ratios?”*
 
-*“What would you want to clarify with the data team before using P/E in a report?”*
+* “What would be hidden if we averaged over all years at once?”*
 
 📌 **Common Misunderstandings**
 
-Students may think `inner_join()` is simply a ‘better’ join because it produces complete data, without noticing that it drops observations.
+Students may group only by industry or only by year, rather than both.
 
-Students may confuse missing `pe` values with a coding error, when in practice they may reflect real data limitations or variable-definition issues.
+Students may forget that after summarising, the dataset no longer contains one row per firm-year.
 
-Students may not initially see that `missing_pe` comes from the left-hand dataset, not from `pe_data`.
+Students may confuse the number of firms with the number of rows in the original data.
 
-Students may overlook that dropping unmatched observations could bias later analysis if the missingness is systematic.
+Students may over-interpret the scatterplot as showing a strong economic mechanism rather than a descriptive association.
+
+Students may make overly strong claims about share prices without recognising that prices are not directly comparable in every possible economic sense.
+
+⏱️ **Timing**
+
+**10–15 minutes**, the flexible block at the end of class. If you are short on time, put the solutions to (a) and (b) on screen straight away and have groups spend what is left on the plot in (c). Emphasise the business context: in the prep work they saw EPS is positively related to share price, here we see that P/E ratios are also positively related to share price, but the relationship looks weaker. 
 
 :::
 
@@ -154,112 +167,64 @@ Solution
 
 **(a).**
 
-Rows in `asx_tidy` that did not have a matching P/E ratio in `pe_data` were still kept in the dataset.
+```{r}
+# join firm codes to subindustry names
+firm_info <-
+    firm_codes |>
+    left_join(subindustry_names, by = join_by(gsubind))
 
-The `left_join()` added `pe` where a match was found, and left `pe` as missing (`NA`) where no match was found.
+# join subindustry names to the main dataset
+asx_analysis <-
+    asx_with_pe |>
+    left_join(
+        firm_info |> select(-conm),
+        by = join_by(gvkey)
+    )
+```
+
+This join adds firm code information based on `gvkey`, so the analysis dataset now carries the industry classification needed for grouped summaries.
 
 **(b).**
 
 ```{r}
-asx_with_pe_inner <-
-    asx_prices_tidy |>
-    inner_join(
-        pe_data,
-        by = join_by(gvkey, fyear)
+industry_year_summary <-
+    asx_analysis |>
+    # remark adding subind just keeps us the human readable names
+    group_by(gsubind, subind, fyear) |>
+    summarise(
+        avg_pe    = mean(pe, na.rm = TRUE),
+        avg_price = mean(price, na.rm = TRUE),
+        avg_eps   = mean(eps, na.rm = TRUE),
+        n_firms   = n(),
+        .groups   = "drop"
     )
 ```
-
-`asx_with_pe_inner` contains only the firm-year observations that have a match in both `asx_tidy` and `pe_data`.
-
-Compared with `asx_with_pe`, it drops the rows where no matching P/E ratio was found.
-
-So `inner_join()` keeps only complete matches, while `left_join()` keeps all rows from `asx_tidy` whether they match or not.
 
 **(c).**
 
 ```{r}
-missing_pe <-
-    asx_prices_tidy |>
-    anti_join(
-        pe_data,
-        by = join_by(gvkey, fyear)
-    )
+#| warning: false
+industry_year_summary |>
+    filter(n_firms >= 4, avg_pe < 100, !is.na(subind)) |>
+    ggplot(aes(x = avg_pe, y = avg_price)) +
+    geom_point(alpha = 0.7, aes(color = subind)) +
+    geom_smooth(method = "lm", color = "blue", se = FALSE) +
+    labs(
+        title = "Average Share Price vs Average P/E Ratio by Industry-Year",
+        x = "Average P/E Ratio",
+        y = "Average Share Price"
+    ) +
+    theme_minimal() 
 ```
-
-`missing_pe` contains the firm-year observations in `asx_tidy` that did not find a match in `pe_data`.
-
-This is different from the `inner_join()` result because `inner_join()` keeps the matched observations, while `anti_join()` keeps the unmatched ones.
 
 **(d).**
 
-`asx_tidy` and `asx_with_pe` should have the same number of rows, because the `left_join()` keeps every row from `asx_tidy`.
+The plot shows whether industry-year observations with higher average P/E ratios also tend to have higher average share prices, but the relationship is not necessarily very tight. 
 
-`asx_with_pe_inner` should have fewer rows if some firm-year observations do not have a matching P/E ratio.
+Some industries may cluster together, while others (like Interactive Media & Services)  may stand out as outliers with unusually high average prices or valuation multiples.
 
-`missing_pe` shows exactly the observations that were left out of the inner join.
+Industry differences in growth expectations, profitability, risk, or business model may help explain why some industry-year observations sit in different parts of the plot.
 
-Together, these row counts show how much of the firm-year dataset has valid P/E coverage and how much is missing.
-
-**(e).**
-
-Students’ exact answers will vary, but a good answer would identify one or two patterns in `missing_pe`.
-
-For example:
-
-* missing P/E ratios may be concentrated in certain years
-* missing P/E ratios may occur more often when EPS is negative or very close to zero
-* missing P/E rations for certain firms
-
-Illustrative code could include:
-
-```{r}
-missing_pe |>
-    count(fyear)
-```
-
-```{r}
-missing_pe |>
-    summarise(
-        min_eps = min(eps, na.rm = TRUE),
-        max_eps = max(eps, na.rm = TRUE),
-        avg_eps = mean(eps, na.rm = TRUE)
-    )
-```
-
-```{r}
-missing_pe |>
-  count(conm) |>
-  arrange(desc(n))
-```
-
-
-**(f).**
-
-Possible explanations include:
-
-* The supplied `pe_data` file may not cover every firm in our ASX dataset.
-* Some firms may appear in `asx_tidy` but be missing from `pe_data` for certain years.
-* The P/E file may cover a different time period from the main ASX dataset.
-* P/E ratios may be intentionally omitted when EPS is negative or very close to zero.
-* The data team may have filtered the file before giving it to us, so only a subset of firm-years was included.
-* The two datasets may have been sourced under different rules, even if they use the same identifiers.
-
-**(g).**
-
-Possible questions for the data team include:
-
-* Does `pe_data` cover all firms in our ASX dataset, or only a subset?
-* Are some years intentionally missing from the P/E file?
-* How is P/E defined in this dataset, and are firms with negative or near-zero EPS excluded?
-* Was the P/E file filtered before it was given to us?
-* Should missing P/E values be treated as expected missingness, or as a sign that the match or source file needs to be checked?
-
-If the missing values seem to reflect incomplete firm coverage, the team might:
-
-* check whether the missing firms can be sourced from the original provider
-* request a broader extract from the data team
-* look for an additional source covering those firms and years
-* decide whether the analysis should be restricted to firms with reliable P/E coverage
 
 :::
 

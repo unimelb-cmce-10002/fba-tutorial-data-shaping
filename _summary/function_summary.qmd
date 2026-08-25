@@ -10,117 +10,6 @@ This page collects every new R function you used in this tutorial, in one place,
 
 For more information on any function, use ?`function_name` in the R console (e.g. `?pivot_longer`) to see the official documentation, which includes a full list of arguments, descriptions, and often many examples.
 
-### `is.na()`
-
-**Package:** Base R
-
-**What it does:** Checks each value in a column and returns `TRUE` if it is missing (`NA`), or `FALSE` if it isn't.
-
-**Why you'd use it:** To count how many values are missing, or to keep/drop rows depending on whether a value is missing.
-
-**Arguments:**
-
-- `x` — the value or column you want to check for missingness.
-
-**Example:**
-
-```{r}
-#| eval: false
-# Keep only rows where the P/E ratio is not missing
-pe_data <-
-    pe_data |>
-    filter(!is.na(pe))
-```
-
-### `theme_minimal()`
-
-**Package:** ggplot2
-
-**What it does:** Applies a clean, uncluttered visual style to a plot, removing the default grey background.
-
-**Why you'd use it:** To make charts easier to read and more presentable, for example before sharing them with a manager.
-
-**Arguments:**
-
-- none used in this tutorial.
-
-**Example:**
-
-```{r}
-#| eval: false
-asx_prices_tidy |>
-    ggplot(aes(x = eps, y = price)) +
-    geom_point(alpha = 0.4) +
-    theme_minimal()
-```
-
-### `left_join()`
-
-**Package:** dplyr
-
-**What it does:** Combines two data frames by matching rows on a shared column (or columns). Every row from the left-hand (first) data frame is kept, and matching columns from the right-hand data frame are added on. If there's no match, the new columns are filled with missing values (`NA`).
-
-**Why you'd use it:** To bring extra information, such as subindustry names or P/E ratios, into your main dataset without losing any of your original rows.
-
-**Arguments:**
-
-- `x` — the left-hand data frame (usually piped in with `|>`). All of its rows are kept.
-- `y` — the right-hand data frame you're pulling extra columns from.
-- `by` — which column(s) to match rows on, set with `join_by()`.
-
-**Example:**
-
-```{r}
-#| eval: false
-firm_info <-
-    firm_codes |>
-    left_join(subindustry_names, by = join_by(gsubind))
-```
-
-### `join_by()`
-
-**Package:** dplyr
-
-**What it does:** Tells a join function, like `left_join()`, `inner_join()`, or `anti_join()`, which column(s) to use to match rows between two data frames.
-
-**Why you'd use it:** Every join needs a shared "key" column to match on. When one column isn't enough to uniquely identify a row, you can list more than one.
-
-**Arguments:**
-
-- `...` — the column name(s) shared by both data frames, e.g. `gvkey` alone, or `gvkey, fyear` together.
-
-**Example:**
-
-```{r}
-#| eval: false
-# Match on both firm and year, since asx_prices_tidy has one row per firm-year
-asx_with_pe <-
-    asx_prices_tidy |>
-    left_join(pe_data, by = join_by(gvkey, fyear))
-```
-
-### `as.numeric()`
-
-**Package:** Base R
-
-**What it does:** Converts a column stored as text into numbers.
-
-**Why you'd use it:** After reshaping data, new columns like a year extracted from a column name often come out as text. Converting them to numbers lets you filter and calculate with them properly.
-
-**Arguments:**
-
-- `x` — the value or column you want to convert to a number.
-
-**Example:**
-
-```{r}
-#| eval: false
-# fyear comes out of pivot_longer() as text, so convert it to a number
-asx_prices_tidy <-
-    asx_prices_tidy |>
-    mutate(fyear = as.numeric(fyear))
-```
-
 ### `pivot_longer()`
 
 **Package:** tidyr
@@ -151,25 +40,27 @@ asx_prices_tidy <-
     mutate(fyear = as.numeric(fyear))
 ```
 
-### `starts_with()`
+### `left_join()`
 
-**Package:** tidyselect (bundled with dplyr and tidyr, loaded with `library(tidyverse)`)
+**Package:** dplyr
 
-**What it does:** Selects every column whose name begins with a given piece of text.
+**What it does:** Combines two data frames by matching rows on a shared column (or columns). Every row from the left-hand (first) data frame is kept, and matching columns from the right-hand data frame are added on. If there's no match, the new columns are filled with missing values (`NA`).
 
-**Why you'd use it:** To grab a whole group of similarly-named columns, like all the `price_...` and `eps_...` columns, without typing out every year by hand.
+**Why you'd use it:** To bring extra information, such as subindustry names or P/E ratios, into your main dataset without losing any of your original rows.
 
 **Arguments:**
 
-- `match` — the text the column name should start with, in quotation marks, e.g. `"price"`.
+- `x` — the left-hand data frame (usually piped in with `|>`). All of its rows are kept.
+- `y` — the right-hand data frame you're pulling extra columns from.
+- `by` — which column(s) to match rows on, set with `join_by()`.
 
 **Example:**
 
 ```{r}
 #| eval: false
-# Select all columns that start with "price" or "eps"
-asx_prices_messy |>
-    select(starts_with("price") | starts_with("eps"))
+firm_info <-
+    firm_codes |>
+    left_join(subindustry_names, by = join_by(gsubind))
 ```
 
 ### `inner_join()`
@@ -218,6 +109,50 @@ missing_pe <-
     anti_join(pe_data, by = join_by(gvkey, fyear))
 ```
 
+### `join_by()`
+
+**Package:** dplyr
+
+**What it does:** Tells a join function, like `left_join()`, `inner_join()`, or `anti_join()`, which column(s) to use to match rows between two data frames.
+
+**Why you'd use it:** Every join needs a shared "key" column to match on. When one column isn't enough to uniquely identify a row, you can list more than one.
+
+**Arguments:**
+
+- `...` — the column name(s) shared by both data frames, e.g. `gvkey` alone, or `gvkey, fyear` together.
+
+**Example:**
+
+```{r}
+#| eval: false
+# Match on both firm and year, since asx_prices_tidy has one row per firm-year
+asx_with_pe <-
+    asx_prices_tidy |>
+    left_join(pe_data, by = join_by(gvkey, fyear))
+```
+
+### `as.numeric()`
+
+**Package:** Base R
+
+**What it does:** Converts a column stored as text into numbers.
+
+**Why you'd use it:** After reshaping data, new columns like a year extracted from a column name often come out as text. Converting them to numbers lets you filter and calculate with them properly.
+
+**Arguments:**
+
+- `x` — the value or column you want to convert to a number.
+
+**Example:**
+
+```{r}
+#| eval: false
+# fyear comes out of pivot_longer() as text, so convert it to a number
+asx_prices_tidy <-
+    asx_prices_tidy |>
+    mutate(fyear = as.numeric(fyear))
+```
+
 ### `count()`
 
 **Package:** dplyr
@@ -236,6 +171,28 @@ missing_pe <-
 #| eval: false
 missing_pe |>
     count(fyear)
+```
+
+### `is.na()`
+
+**Package:** Base R
+
+**What it does:** Checks each value in a column and returns `TRUE` if it is missing (`NA`), or `FALSE` if it isn't.
+
+**Why you'd use it:** To count how many values are missing, or to keep/drop rows depending on whether a value is missing.
+
+**Arguments:**
+
+- `x` — the value or column you want to check for missingness.
+
+**Example:**
+
+```{r}
+#| eval: false
+# Keep only rows where the P/E ratio is not missing
+pe_data <-
+    pe_data |>
+    filter(!is.na(pe))
 ```
 
 ### `min()`

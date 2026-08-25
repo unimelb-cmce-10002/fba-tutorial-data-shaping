@@ -1,3 +1,4 @@
+<!-- question-type: inclass -->
 ### Exercise 3: Tidying Data to Make Analysis Easier
 
 **(a)** Look at the column names in `asx_prices_messy`, and answer the following:
@@ -36,34 +37,6 @@ asx_prices_tidy |>
 
 What would we need to do if we added many more years of data?
 
-**(e)** We now want to recreate our plot of share price against EPS using the tidy dataset.
-
-Complete the code below.
-
-```{r}
-#| eval: false
-asx_prices_tidy |>
-    filter(eps > -5) |>
-    # create a scatterplot with EPS on the x-axis and price on the y-axis
-    YOUR_CODE +
-    # add points
-    YOUR_CODE +
-    # add a fitted straight line
-    YOUR_CODE +
-    # add a title and axis labels
-    YOUR_CODE +
-    # use a theme
-    YOUR_CODE
-```
-
-**(f)** Modify your code from part (e) so that the plot only shows observations from 2023 and 2024. Make this change by adding just one line to your existing pipeline.
-
-**(g)** Look at your plot from part (e) and answer the following:
-
-* What overall relationship do you observe between EPS and share price?
-* What might explain firms that lie well above or below the fitted line?
-* Do firms with very low or negative EPS seem to follow the same straight-line pattern as the rest of the data?
-
 <!-- BEGIN PROFILE:r-teaching-guide -->
 
 ::: {.content-visible when-profile="r-teaching-guide"}
@@ -83,7 +56,7 @@ Students should:
 
 * Reshape wide stock price data into tidy long form using `pivot_longer()`.
 
-* Use tidy data to carry out simple summaries and visualisations more efficiently.
+* Use tidy data to carry out a simple summary far more efficiently than the wide version allowed.
 
 * Explain why tidy data scales better when more years of data are added.
 
@@ -95,7 +68,7 @@ Column names can themselves contain data: here, names such as `price_2023` conta
 
 `pivot_longer()` can split those names into meaningful parts using `names_to` and `names_sep`.
 
-Tidy data makes common tasks such as filtering, summarising, and plotting much easier because the same variable is stored in one column rather than scattered across many.
+Tidy data makes common tasks such as filtering and summarising much easier because the same variable is stored in one column rather than scattered across many.
 
 💬 **Suggested In-Class Prompts**
 
@@ -117,7 +90,9 @@ Some students may try `pivot_wider()` because they associate ‘tidy’ with ‘
 
 Students may not immediately see why one `filter()` on `fyear` is more scalable than manually referencing many separate year-specific columns.
 
-Students may interpret the fitted straight line too literally, especially for firms with very low or negative EPS.
+⏱️ **Timing**
+
+**15 minutes.** Part (b) gates everything later — if a group is still stuck on the pivot after 10 minutes, give them the answer rather than let them fall behind.
 
 :::
 
@@ -179,57 +154,6 @@ asx_prices_tidy |>
 This version is easier because all share prices are stored in one `price` column and all years are stored in one `fyear` column. That means we can filter the years we want, then calculate the mean once, rather than referring to separate columns such as `price_2023` and `price_2024` individually.
 
 If we added many more years of data, this tidy version would still work with the same basic code. We would just change the years inside `filter()`. In the wide version, we would need to keep adding more year-specific columns to the calculation, which becomes repetitive and harder to manage.
-
-**(e).**
-
-```{r}
-#| warning: false
-asx_prices_tidy |>
-    filter(eps > -5) |>
-    # create a scatterplot with EPS on the x-axis and price on the y-axis
-    ggplot(aes(x = eps, y = price)) +
-    # add points
-    geom_point(alpha = 0.4) +
-    # add a fitted straight line
-    geom_smooth(method = "lm") +
-    # add a title and axis labels
-    labs(
-        title = "Share Price vs EPS (2019–2024)",
-        x = "Earnings per Share",
-        y = "Share Price"
-    ) +
-    # use a theme
-    theme_minimal()
-```
-
-**(f).**
-
-```{r}
-#| warning: false
-asx_prices_tidy |>
-    filter(eps > -5) |>
-    filter(fyear %in% c(2023, 2024)) |>
-    # create a scatterplot with EPS on the x-axis and price on the y-axis
-    ggplot(aes(x = eps, y = price)) +
-    # add points
-    geom_point(alpha = 0.4) +
-    # add a fitted straight line
-    geom_smooth(method = "lm", colour = "blue") +
-    # add a title and axis labels
-    labs(
-        title = "Share Price vs EPS (2023–2024)",
-        x = "Earnings per Share",
-        y = "Share Price"
-    ) +
-    # use a theme
-    theme_minimal()
-```
-
-**(g).**
-
-* There is a positive relationship between EPS and share price. In general, firms with higher earnings per share tend to have higher share prices.
-* Firms above the fitted line may have strong growth expectations, valuable intangible assets, or high investor confidence that is not fully captured by current EPS. Firms below the line may reflect lower growth prospects, greater risk, or weaker investor sentiment.
-* Firms with very low or negative EPS do not seem to follow the straight-line pattern as well as the rest of the data. This suggests that a simple straight line may be a rough summary for the middle of the data, but not a perfect description of the full relationship.
 
 :::
 

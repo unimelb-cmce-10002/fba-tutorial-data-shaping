@@ -1,21 +1,7 @@
+<!-- question-type: prepare -->
 ### Exercise 2: Combining Datasets
 
-In this exercise, you will combine information from two datasets using a join.
-
-To start, load the data:
-
-```{r}
-#| eval: false
-
-firm_codes <-
-    read_csv("data/asx_200_2024.csv") |>
-    select(gvkey, conm, gsubind)
-
-subindustry_names <-
-    read_csv("data/GICS_subindustry.csv")
-```
-
-Take a quick look at the two datasets:
+In this exercise, you will combine information from two datasets using a join. Start with a quick look at the `firm_codes` and `subindustry_names` datasets:
 
 ```{r}
 firm_codes |>
@@ -27,7 +13,7 @@ subindustry_names |>
     head(10)
 ```
 
-**(a)** Look at the variables in `firm_codes` and `subindustry_names`. Which variable or variables look like they could be used to join these two datasets?
+**(a)** Look at the variables in both datasets. Which variable or variables look like they could be used to join these two datasets?
 
 **(b)** Which join variable would you choose? Explain why it is the best choice here.
 

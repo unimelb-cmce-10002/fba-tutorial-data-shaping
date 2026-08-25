@@ -1,63 +1,119 @@
 <!-- question-type: inclass -->
-### Exercise 4: Adding P/E Ratios with a Join
+### Exercise 4: Joins in Miniature
 
-**(a)** We want to add P/E ratios to our tidy ASX firm-year dataset.
+In Exercise 2 you used a `left_join()` to attach subindustry names to a list of firms. A `left_join()` is only one of several ways to combine two tables, and the choice between them matters.
 
-Run the code below to load and prepare the P/E ratio data.
+Before we work with joins on the full ASX dataset, we will practise on two tiny tables where you can count every row by hand.
+
+Run the code below to create them.
+
+```{r}
+firms_toy <- tribble(
+    ~gvkey,  ~conm,           ~gsubind,
+    "001",   "Alpha Mining",  15104020,
+    "002",   "Bright Retail", 30101030,
+    "003",   "Coral Energy",  10102020,
+    "004",   "Delta Tech",    99999999
+)
+
+industry_toy <- tribble(
+    ~gsubind,  ~subind,
+    15104020,  "Diversified Metals & Mining",
+    30101030,  "Food Retail",
+    10102020,  "Oil & Gas Exploration & Production",
+    20305020,  "Highways & Railtracks"
+)
+
+firms_toy
+industry_toy
+```
+
+**(a)** Look carefully at the two tables before running any joins.
+
+* Which firm has a `gsubind` that does **not** appear in `industry_toy`?
+* Which subindustry has no firm in `firms_toy`?
+
+Now **predict**, without running anything, how many rows each of these will return:
+
+* `left_join(firms_toy, industry_toy, by = join_by(gsubind))`
+* `inner_join(firms_toy, industry_toy, by = join_by(gsubind))`
+* `anti_join(firms_toy, industry_toy, by = join_by(gsubind))`
+
+Write your three predictions down before you continue.
+
+**(b)** Now run all three joins and compare the results with your predictions.
 
 ```{r}
 #| eval: false
-pe_data <-
-    read_csv("data/pe.csv") |>
-    select(gvkey, fyear, pe) |>
-    filter(!is.na(pe)) |>
-    arrange(gvkey, fyear)
+firms_toy |> join_one(industry_toy, by = join_by(gsubind))
+
+firms_toy |> join_two(industry_toy, by = join_by(gsubind))
+
+firms_toy |> join_three(industry_toy, by = join_by(gsubind))
 ```
 
-What variables in `pe_data` seem to identify each row?
+For each join, say what happened to Delta Tech and why.
 
-**(b)** In `asx_tidy`, what does one row represent?
-
-Which variable or variables together identify a unique observation in this dataset?
-
-**(c)** Which **two** variables should we use to join `asx_tidy` and `pe_data`?
-
-**(d)** Why do we need both of these variables in the join?
-
-**(e)** Complete the code below to add the `pe` variable from `pe_data` to `asx_tidy`.
+**(c)** What happens if we swap the table on the left with the table on the right for each join?
 
 ```{r}
 #| eval: false
-asx_with_pe <-
-    asx_tidy |>
-    left_join(
-        pe_data,
-        by = YOUR_CODE_HERE
-    )
+industry_toy |> join_one(firms_toy, by = join_by(gsubind))
+
+industry_toy |> join_two(firms_toy, by = join_by(gsubind))
+
+industry_toy |> join_three(firms_toy, by = join_by(gsubind))
 ```
 
-**(f)** After the join, what changed in the dataset?
+What does this result tell you? Which joins are directional?
 
-In your answer, explain:
+**(d)** Complete the sentences below in your own words.
 
-* what new information was added
-* whether the join mainly added rows or columns
+* I would use `left_join()` when I want to _____
+* I would use `inner_join()` when I want to _____
+* I would use `anti_join()` when I want to _____
 
-**(g)** Now suppose we join the two datasets using only `gvkey`.
+**(e)** So far each firm has appeared only once. Real firm-year data is different, because the same firm appears in several years.
 
-Run the code below.
+Run the code below to create a second pair of tiny tables.
+
+```{r}
+prices_toy <- tribble(
+    ~gvkey, ~fyear, ~price,
+    "001",  2022,   10.0,
+    "001",  2023,   12.0,
+    "001",  2024,   15.0
+)
+
+pe_toy <- tribble(
+    ~gvkey, ~fyear, ~pe,
+    "001",  2023,   18.0,
+    "001",  2024,   20.0
+)
+```
+
+Now join them using **only** `gvkey`.
 
 ```{r}
 #| eval: false
-asx_wrong_join <-
-    asx_tidy |>
-    left_join(
-        pe_data,
-        by = YOUR_CODE_HERE
-    )
+prices_toy |> left_join(pe_toy, by = join_by(gvkey))
 ```
 
-What goes wrong here, and why?
+* How many rows did you expect? How many did you get?
+* R printed a warning. What does it say?
+* Look at the column names in the result. What happened to `fyear`?
+* Look at the row for 2022. Which P/E ratios has it been matched to, and is that sensible?
+
+**(f)** Now join the same two tables using **both** `gvkey` and `fyear`.
+
+```{r}
+#| eval: false
+prices_toy |> left_join(pe_toy, by = join_by(gvkey, fyear))
+```
+
+* How many rows now?
+* Which row has a missing `pe`, and why is that the right answer?
+* In one sentence: why did the join in part (e) need a second key?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 
@@ -74,43 +130,53 @@ Teaching Note
 🎯 **Learning Objective**
 Students should:
 
-* Recognise that after tidying, the observational unit in `asx_tidy` is a firm-year rather than just a firm.
+* Predict the output of a join before running it, then check that prediction.
 
-* Identify when a join requires multiple keys rather than a single key.
+* Distinguish `left_join()`, `inner_join()` and `anti_join()` by what each one keeps and drops.
 
-* Use `left_join()` with `join_by()` to combine two firm-year datasets.
+* Recognise that `left_join()` and `anti_join()` ask directional questions, so swapping the tables asks something different.
 
-* Explain what can go wrong when a join is done with an incomplete key.
+* See a join key that is too coarse produce duplicated rows, at a scale where the duplication can be counted by hand.
 
 ✅ **Core Concepts to Highlight**
 
-Observational unit: after Exercise 3, each row in `asx_tidy` represents one firm in one year.
+The three joins differ only in which rows survive. `left_join()` keeps everything on the left, `inner_join()` keeps only matches, `anti_join()` keeps only non-matches.
 
-A correct join key must match the observational unit. Here, `gvkey` identifies the firm, while `fyear` identifies the year, so both are needed together.
+`left_join()` and `anti_join()` are directional and swapping the tables changes the question being asked. `inner_join()` is not directional.
 
-A `left_join()` keeps the rows from the left-hand dataset and adds matching columns from the right-hand dataset.
+A join key must identify the observational unit. In part (e) `gvkey` identifies a firm but not a firm-year, so each price row matches every P/E row for that firm.
 
-Using too few join keys can create incorrect duplication because one observation can match many rows in the other table.
+The `fyear.x` / `fyear.y` columns in part (e) are the visible symptom: because `fyear` was not part of the key, R had no reason to line the two year columns up, so it kept both.
+
+Row counts are a cheap diagnostic. Students should get into the habit of checking them after any join.
 
 💬 **Suggested In-Class Prompts**
 
-* “What does one row mean now that the data are tidy?”*
+*"Before you run it — how many rows? Commit to a number."*
 
-* “Why is `gvkey` not enough on its own once firms appear in multiple years?”*
+*"Delta Tech survived one join and vanished in another. Which, and why?"*
 
-* “What should stay the same after the correct join: rows, columns, or both?”*
+*"What business question does each `anti_join()` direction answer?"*
 
-* “What kind of error are we making when we join only on firm and ignore year?”*
+*"The 2022 price got a 2023 P/E ratio. What would that do to an analysis?"*
+
+*"How would you have spotted this problem if the table had 9,000 rows instead of 3?"*
 
 📌 **Common Misunderstandings**
 
-Students may say that `gvkey` alone identifies a row because it identifies the firm, forgetting that the same firm appears in multiple years.
+Students may skip the prediction in part (a) and go straight to running the code. The prediction is the point; ask them to write numbers down before they type.
 
-Students may know both variables are needed but still struggle to explain why in terms of the observational unit.
+Students may expect `anti_join()` to return the matching rows, or to return columns from the right-hand table. It returns neither — only unmatched rows from the left, with the left table's columns.
 
-Some students may think a join is successful whenever it runs, even if it duplicates rows incorrectly.
+Students may assume the two `anti_join()` directions are interchangeable.
 
-Students may not initially connect an incorrect join to downstream analytical errors.
+Students may read the many-to-many warning as an error and stop, rather than as a diagnostic about their key.
+
+Students may think 6 rows is simply "more data" rather than the same three observations duplicated.
+
+⏱️ **Timing**
+
+**25 minutes.** Prioritise understanding of parts (d) and (e). Compress (c) if running behind.
 
 :::
 
@@ -134,55 +200,96 @@ Solution
 
 **(a).**
 
-The variables that seem to identify each row are `gvkey` and `fyear`.
+Delta Tech (`gvkey` 004) has `gsubind` 99999999, which does not appear in `industry_toy`.
 
-That is because each row appears to represent one firm in one year, with `pe` giving the P/E ratio for that firm-year observation.
+Highways & Railtracks (`gsubind` 20305020) has no firm in `firms_toy`.
+
+The predictions should be:
+
+* `left_join()`: 4 rows — every firm is kept
+* `inner_join()`: 3 rows — Delta Tech is dropped
+* `anti_join()`: 1 row — only Delta Tech
 
 **(b).**
 
-One row in `asx_tidy` represents one firm in one year.
+```{r}
+firms_toy |> left_join(industry_toy, by = join_by(gsubind))
+```
 
-So the variables that together identify a unique observation are `gvkey` and `fyear`.
+```{r}
+firms_toy |> inner_join(industry_toy, by = join_by(gsubind))
+```
+
+```{r}
+firms_toy |> anti_join(industry_toy, by = join_by(gsubind))
+```
+
+Delta Tech is treated differently by each join:
+
+* `left_join()` keeps Delta Tech but leaves `subind` as `NA`, because there was nothing to fill it with.
+* `inner_join()` drops Delta Tech entirely, because it has no match in `industry_toy`.
+* `anti_join()` returns only Delta Tech, because it is the only firm without an industry match.
+
+Note also that `anti_join()` returns just the columns from `firms_toy`. It is not adding information, it is filtering.
 
 **(c).**
 
-The two variables we should use are `gvkey` and `fyear`.
+```{r}
+industry_toy |> left_join(firms_toy, by = join_by(gsubind))
+```
+Compared with our original `left_join()`:
+
+* We lose Delta Tech because it doesn't exist in the left table (`industry_toy`)
+* We keep the Highways & Railtracks industry, but `gvkey` and `conm` are `NA` because there was nothing to fill it with from the `firms_toy` table.
+
+```{r}
+industry_toy |> inner_join(firms_toy, by = join_by(gsubind))
+```
+
+The same three firms are returned, so `inner_join()` is not directional — only rows that match in both tables survive, whichever table you start from. The only difference is the column order, which follows whichever table came first.
+
+```{r}
+industry_toy |> anti_join(firms_toy, by = join_by(gsubind))
+```
+
+This returns Highways & Railtracks — a subindustry with no firms in our list. In contrast, the original `anti_join()` returned Delta Tech — a firm with no subindustry in our list.
+
+Overall, we see that `left_join()` and `anti_join()` are directional, while `inner_join()` is not. `left_join()` keeps everything from the left table, and `anti_join()` returns only rows from the left table that have no match in the right table. Swapping the tables changes which rows are kept or dropped.
 
 **(d).**
 
-We need both variables because `gvkey` tells us which firm we are looking at, but it does not tell us which year. Since each firm appears in multiple years, joining only on `gvkey` would not uniquely identify the correct match. Adding `fyear` makes the match happen at the firm-year level, which is the correct observational unit in both datasets.
+Reasonable answers:
+
+* `left_join()` — when I want to add information to a table without losing any of its rows.
+* `inner_join()` — when I want to keep only the observations that appear in both tables.
+* `anti_join()` — when I want to find the rows that failed to match, usually to check data quality.
 
 **(e).**
 
 ```{r}
-asx_with_pe <-
-    asx_prices_tidy |>
-    left_join(
-        pe_data,
-        by = join_by(gvkey, fyear)
-    )
+#| warning: true
+prices_toy |> left_join(pe_toy, by = join_by(gvkey))
 ```
+
+The result has **6 rows**, not 3. Each of the three price rows matched both of the P/E rows, because `gvkey` alone does not distinguish the years.
+
+R warns about an "unexpected many-to-many relationship", telling us that rows on each side matched multiple rows on the other. This is a warning rather than an error, so the code still runs and produces a misleading dataset.
+
+The clearest symptom is in the column names: the result contains `fyear.x` and `fyear.y` rather than a single `fyear`. Because `fyear` was not part of the join key, R had no reason to treat the two year columns as the same variable, so it kept both and disambiguated them.
+
+Looking at 2022: its price of 10.0 has been paired with both the 2023 P/E ratio (18.0) and the 2024 P/E ratio (20.0). Neither is sensible. The 2022 row should have no P/E at all, because `pe_toy` does not cover 2022.
 
 **(f).**
 
-The join added a new variable, `pe`, to the dataset.
-
-It mainly added a column rather than rows, because we matched one firm-year observation in `asx_tidy` to one firm-year observation in `pe_data`.
-
-**(g).**
-
 ```{r}
-asx_wrong_join <-
-    asx_prices_tidy |>
-    left_join(
-        pe_data,
-        by = join_by(gvkey)
-    )
+prices_toy |> left_join(pe_toy, by = join_by(gvkey, fyear))
 ```
 
-This goes wrong because each firm in `asx_tidy` can now match multiple years in `pe_data` for the same firm. That creates duplicated rows and incorrect matches across years.
+Now there are **3 rows**, matching the three rows we started with.
 
-For example, a 2023 observation for one firm could be matched not only to its 2023 P/E ratio, but also to that firm’s 2022 or 2024 P/E ratios. So the join runs, but the resulting dataset is no longer correctly aligned at the firm-year level.
+The 2022 row has a missing `pe`, which is the right answer: `pe_toy` genuinely has no 2022 observation, so there is nothing to attach. A missing value here is honest, whereas the 6-row result in part (e) invented matches that do not exist.
+
+The join in part (e) needed a second key because one row in these tables represents one **firm-year**, not one firm, so it takes both `gvkey` and `fyear` together to identify an observation.
 
 :::
 
@@ -191,4 +298,3 @@ For example, a 2023 observation for one firm could be matched not only to its 20
 :::
 
 <!-- END PROFILE:r-solutions -->
-
