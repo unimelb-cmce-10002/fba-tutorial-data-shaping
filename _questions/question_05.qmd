@@ -1,5 +1,5 @@
 <!-- question-type: inclass -->
-### Exercise 5: Adding P/E Ratios and Checking What You Got
+### Exercise 5: Joins with real data
 
 You now know what `left_join()`, `inner_join()` and `anti_join()` do, and why a join key has to match the observational unit. In this exercise you will apply all of that to the full ASX dataset.
 
@@ -17,8 +17,8 @@ pe_data <-
 
 **(a)** Before joining anything, work out what you are joining.
 
-* What does one row of `asx_prices_tidy` represent, and which variable or variables together identify it?
-* What does one row of `pe_data` represent?
+* What does one row of `asx_prices_tidy` represent? How many variables together identify a row/observation?
+* What about for `pe_data`?
 * Which variables should you therefore join on?
 
 **(b)** Complete the code below to add the `pe` variable from `pe_data` to `asx_prices_tidy`.
@@ -35,7 +35,7 @@ asx_with_pe <-
 
 Did the join add rows, columns, or both?
 
-**(c)** A join is not finished until you have checked what it did. Run the two other joins on the same pair of tables.
+**(c)** Run the two other joins on the same pair of tables.
 
 ```{r}
 #| eval: false
@@ -54,7 +54,7 @@ missing_pe <-
     )
 ```
 
-Now compare the row counts.
+A join is not finished until you have checked what it did. Now compare the row counts.
 
 ```{r}
 #| eval: false
@@ -154,7 +154,7 @@ This is the payoff of the whole tutorial: the joins are not just plumbing, they 
 
 📌 **Common Misunderstandings**
 
-Students may reach for `gvkey` alone out of habit. Send them back to Exercise 4(e) rather than explaining it again.
+Students may reach for `gvkey` alone out of habit. Explain the importance of joining with all of the keys that together identify one observation.
 
 Students may report the coverage number without reacting to it. Push them to say whether 25% is acceptable.
 

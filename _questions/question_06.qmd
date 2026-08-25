@@ -3,24 +3,22 @@
 
 **(a)** We now want to compare valuation patterns across industries.
 
-To do that, we first need to add industry codes to `asx_with_pe`.
-
-Complete the code below to join `firm_info` onto `asx_with_pe` using `gvkey`.
+To do that, we first need to add industry codes to `asx_with_pe`. Run the following code, which joins each of our datasets together.
 
 ```{r}
 #| eval: false
 
-# recreating firm_info for those that did not successfully complete exercise 2
+# join firm codes to subindustry names (a repeat from exercise 2)
 firm_info <-
     firm_codes |>
     left_join(subindustry_names, by = join_by(gsubind))
 
-# new join
+# join subindustry names to the main dataset
 asx_analysis <-
     asx_with_pe |>
-    YOUR_CODE(
-        YOUR_CODE,
-        by = YOUR_CODE_HERE
+    left_join(
+        firm_info |> select(-conm),
+        by = join_by(gvkey)
     )
 ```
 
@@ -40,7 +38,7 @@ industry_year_summary <-
     asx_analysis |>
     YOUR_CODE(gsubind, subind, YOUR_VARIABLE) |>
     summarise(
-        avg_pe    = YOUR_CODE_HERE,
+        avg_pe    = mean(pe, na.rm = TRUE),
         avg_price = YOUR_CODE_HERE,
         avg_eps   = YOUR_CODE_HERE,
         n_firms   = YOUR_CODE_HERE,

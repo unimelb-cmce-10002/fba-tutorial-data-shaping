@@ -92,28 +92,30 @@ pe_toy <- tribble(
 )
 ```
 
-Now join them using **only** `gvkey`.
+<!-- Now join them using **only** `gvkey`. -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- prices_toy |> left_join(pe_toy, by = join_by(gvkey)) -->
+<!-- ``` -->
+
+<!-- * How many rows did you expect? How many did you get? -->
+<!-- * R printed a warning. What does it say? -->
+<!-- * Look at the column names in the result. What happened to `fyear`? -->
+<!-- * Look at the row for 2022. Which P/E ratios has it been matched to, and is that sensible? -->
+
+**(f)** Now left join `prices_toy` and `pe_toy` using **both** `gvkey` and `fyear`.
 
 ```{r}
 #| eval: false
-prices_toy |> left_join(pe_toy, by = join_by(gvkey))
+prices_toy |> YOUR_CODE_HERE
 ```
 
-* How many rows did you expect? How many did you get?
-* R printed a warning. What does it say?
-* Look at the column names in the result. What happened to `fyear`?
-* Look at the row for 2022. Which P/E ratios has it been matched to, and is that sensible?
+* Did the join work as intended? How can you tell?
 
-**(f)** Now join the same two tables using **both** `gvkey` and `fyear`.
-
-```{r}
-#| eval: false
-prices_toy |> left_join(pe_toy, by = join_by(gvkey, fyear))
-```
-
-* How many rows now?
-* Which row has a missing `pe`, and why is that the right answer?
-* In one sentence: why did the join in part (e) need a second key?
+<!-- * How many rows now? -->
+<!-- * Which row has a missing `pe`, and why is that the right answer? -->
+<!-- * In one sentence: why did the join in part (e) need a second key? -->
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 
@@ -136,7 +138,7 @@ Students should:
 
 * Recognise that `left_join()` and `anti_join()` ask directional questions, so swapping the tables asks something different.
 
-* See a join key that is too coarse produce duplicated rows, at a scale where the duplication can be counted by hand.
+<!-- * See a join key that is too coarse produce duplicated rows, at a scale where the duplication can be counted by hand. -->
 
 ✅ **Core Concepts to Highlight**
 
@@ -144,9 +146,10 @@ The three joins differ only in which rows survive. `left_join()` keeps everythin
 
 `left_join()` and `anti_join()` are directional and swapping the tables changes the question being asked. `inner_join()` is not directional.
 
-A join key must identify the observational unit. In part (e) `gvkey` identifies a firm but not a firm-year, so each price row matches every P/E row for that firm.
+A join key must identify the observational unit. In parts (e-f) `gvkey` identifies a firm but not a firm-year.
+<!-- , so each price row matches every P/E row for that firm. -->
 
-The `fyear.x` / `fyear.y` columns in part (e) are the visible symptom: because `fyear` was not part of the key, R had no reason to line the two year columns up, so it kept both.
+<!-- The `fyear.x` / `fyear.y` columns in part (e) are the visible symptom: because `fyear` was not part of the key, R had no reason to line the two year columns up, so it kept both. -->
 
 Row counts are a cheap diagnostic. Students should get into the habit of checking them after any join.
 
@@ -158,9 +161,9 @@ Row counts are a cheap diagnostic. Students should get into the habit of checkin
 
 *"What business question does each `anti_join()` direction answer?"*
 
-*"The 2022 price got a 2023 P/E ratio. What would that do to an analysis?"*
+<!-- *"The 2022 price got a 2023 P/E ratio. What would that do to an analysis?"* -->
 
-*"How would you have spotted this problem if the table had 9,000 rows instead of 3?"*
+<!-- *"How would you have spotted this problem if the table had 9,000 rows instead of 3?"* -->
 
 📌 **Common Misunderstandings**
 
@@ -170,13 +173,13 @@ Students may expect `anti_join()` to return the matching rows, or to return colu
 
 Students may assume the two `anti_join()` directions are interchangeable.
 
-Students may read the many-to-many warning as an error and stop, rather than as a diagnostic about their key.
+<!-- Students may read the many-to-many warning as an error and stop, rather than as a diagnostic about their key. -->
 
-Students may think 6 rows is simply "more data" rather than the same three observations duplicated.
+<!-- Students may think 6 rows is simply "more data" rather than the same three observations duplicated. -->
 
 ⏱️ **Timing**
 
-**25 minutes.** Prioritise understanding of parts (d) and (e). Compress (c) if running behind.
+**25 minutes.** Prioritise understanding of part (d). Compress (c) if running behind.
 
 :::
 
@@ -264,20 +267,20 @@ Reasonable answers:
 * `inner_join()` — when I want to keep only the observations that appear in both tables.
 * `anti_join()` — when I want to find the rows that failed to match, usually to check data quality.
 
-**(e).**
+<!-- **(e).** -->
 
-```{r}
-#| warning: true
-prices_toy |> left_join(pe_toy, by = join_by(gvkey))
-```
+<!-- ```{r} -->
+<!-- #| warning: true -->
+<!-- prices_toy |> left_join(pe_toy, by = join_by(gvkey)) -->
+<!-- ``` -->
 
-The result has **6 rows**, not 3. Each of the three price rows matched both of the P/E rows, because `gvkey` alone does not distinguish the years.
+<!-- The result has **6 rows**, not 3. Each of the three price rows matched both of the P/E rows, because `gvkey` alone does not distinguish the years. -->
 
-R warns about an "unexpected many-to-many relationship", telling us that rows on each side matched multiple rows on the other. This is a warning rather than an error, so the code still runs and produces a misleading dataset.
+<!-- R warns about an "unexpected many-to-many relationship", telling us that rows on each side matched multiple rows on the other. This is a warning rather than an error, so the code still runs and produces a misleading dataset. -->
 
-The clearest symptom is in the column names: the result contains `fyear.x` and `fyear.y` rather than a single `fyear`. Because `fyear` was not part of the join key, R had no reason to treat the two year columns as the same variable, so it kept both and disambiguated them.
+<!-- The clearest symptom is in the column names: the result contains `fyear.x` and `fyear.y` rather than a single `fyear`. Because `fyear` was not part of the join key, R had no reason to treat the two year columns as the same variable, so it kept both and disambiguated them. -->
 
-Looking at 2022: its price of 10.0 has been paired with both the 2023 P/E ratio (18.0) and the 2024 P/E ratio (20.0). Neither is sensible. The 2022 row should have no P/E at all, because `pe_toy` does not cover 2022.
+<!-- Looking at 2022: its price of 10.0 has been paired with both the 2023 P/E ratio (18.0) and the 2024 P/E ratio (20.0). Neither is sensible. The 2022 row should have no P/E at all, because `pe_toy` does not cover 2022. -->
 
 **(f).**
 
@@ -285,11 +288,12 @@ Looking at 2022: its price of 10.0 has been paired with both the 2023 P/E ratio 
 prices_toy |> left_join(pe_toy, by = join_by(gvkey, fyear))
 ```
 
-Now there are **3 rows**, matching the three rows we started with.
+Now there are **3 rows**, matching the three rows we started with. This is expected for a left_join.
 
-The 2022 row has a missing `pe`, which is the right answer: `pe_toy` genuinely has no 2022 observation, so there is nothing to attach. A missing value here is honest, whereas the 6-row result in part (e) invented matches that do not exist.
+The 2022 row has a missing `pe`, which is the right answer: `pe_toy` genuinely has no 2022 observation, so there is nothing to attach. 
+<!-- A missing value here is honest, whereas the 6-row result in part (e) invented matches that do not exist. -->
 
-The join in part (e) needed a second key because one row in these tables represents one **firm-year**, not one firm, so it takes both `gvkey` and `fyear` together to identify an observation.
+The join needed a second key because one row in these tables represents one **firm-year**, not one firm, so it takes both `gvkey` and `fyear` together to identify an observation.
 
 :::
 
