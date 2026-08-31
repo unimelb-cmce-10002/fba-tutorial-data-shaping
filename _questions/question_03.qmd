@@ -145,7 +145,6 @@ asx_prices_tidy |>
 ```{r}
 asx_prices_tidy |>
     filter(fyear %in% c(2023, 2024)) |>
-    group_by(fyear) |>
     summarise(avg_price = mean(price, na.rm = TRUE))
 ```
 
