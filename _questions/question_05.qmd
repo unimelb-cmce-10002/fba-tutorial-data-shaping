@@ -71,7 +71,7 @@ nrow(missing_pe)
 
 Is that higher or lower than you expected before you looked?
 
-**(e)** A quarter of the data is a lot to lose without knowing why. Investigate `missing_pe` to work out where the gaps are.
+**(e)** Three quarters of the data is a lot to lose without knowing why. Investigate `missing_pe` to work out where the gaps are.
 
 Two things worth checking: whether the missing observations are concentrated in particular years...
 
